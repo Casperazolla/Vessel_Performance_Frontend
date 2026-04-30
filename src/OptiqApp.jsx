@@ -132,7 +132,7 @@ const handleAnalyze = async (e) => {
     formdata.append("text_input", imo.trim());
 
     const response = await fetch(
-      "http://65.1.246.191:8000/Vessel_Performance_Project/run",
+      "https://65.1.246.191:8000/Vessel_Performance_Project/run",
       {
         method: "POST",
         body: formdata,
