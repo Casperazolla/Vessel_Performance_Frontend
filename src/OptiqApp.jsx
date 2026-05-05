@@ -588,9 +588,12 @@ function HullTab({ isMobile }) {
   const fileRef = useRef();
 
   const mockImages = [
-    { label:"Image 1", fouling:"Heavy growth", color:C.critical },
-    { label:"Image 2", fouling:"Moderate",     color:C.warning },
-    { label:"Image 3", fouling:"Moderate",     color:C.warning },
+    { label:"Vertical Sides", fouling:"None", color:C.warning },
+    { label:"Propeller", fouling:"Moderate",     color:C.warning },
+    { label:"Bilge Keels", fouling:"Moderate",     color:C.warning },
+    { label:"Rudder", fouling:"None",          color:C.success },
+    { label:"Sea Chest", fouling:"None",          color:C.success },
+    { label:"Flat Bottom", fouling:"None",          color:C.success },
   ];
 
   const scorecard = [
