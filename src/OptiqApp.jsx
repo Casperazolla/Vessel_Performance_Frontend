@@ -61,26 +61,35 @@ const Logo = ({ small }) => (
 
 const GlobalStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+    @font-face {
+      font-family: 'Aeonik';
+      src: url('/fonts/Aeonik-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Aeonik';
+      src: url('/fonts/Aeonik-Medium.woff2') format('woff2');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Aeonik';
+      src: url('/fonts/Aeonik-Bold.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Syne...');
     *, *::before, *::after { box-sizing: border-box; }
     html, body, #root { margin:0; padding:0; min-height:100%; }
-    body { font-family: 'DM Sans', sans-serif; background:#080f1e; }
-    @keyframes slideUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes fadeIn    { from{opacity:0} to{opacity:1} }
-    @keyframes spin      { to{transform:rotate(360deg)} }
-    @keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:0.5} }
-    input:focus, select:focus {
-      outline:none;
-      border-color: rgba(56,189,248,0.7) !important;
-      box-shadow: 0 0 0 3px rgba(56,189,248,0.1) !important;
-    }
-    select option { background:#0d1929; color:#e2e8f0; }
-    ::-webkit-scrollbar { width:4px; height:4px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:rgba(56,189,248,0.2); border-radius:4px; }
+    body { font-family: 'Aeonik', 'DM Sans', sans-serif; }
+    ...rest of your styles...
   `}</style>
 );
-
 
 function LandingPage({ onEnter }) {
   const [imo, setImo] = useState("");
@@ -102,7 +111,7 @@ function LandingPage({ onEnter }) {
     {
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>,
       title: "Weather Intelligence",
-      desc: "Correlate performance against weather and ocean conditions to optimize routes.",
+      desc: "Correlate performance against weather and ocean conditions.",
     },
   ];
 
@@ -132,7 +141,7 @@ const handleAnalyze = async (e) => {
     formdata.append("text_input", imo.trim());
 
     const response = await fetch(
-      "https://65.1.246.191:8000/Vessel_Performance_Project/run",
+      "http://65.1.246.191:8000/Vessel_Performance_Project/run",
       {
         method: "POST",
         body: formdata,
@@ -178,14 +187,14 @@ const handleAnalyze = async (e) => {
             <Logo />
             {!isMobile && (
               <div style={{ borderLeft:`1px solid ${C.borderSubtle}`, paddingLeft:14 }}>
-                <div style={{ fontSize:13, color:C.textPrimary, fontWeight:500 }}>Optiq Maritime Solutions</div>
+                <div style={{ fontSize:20, color:C.textPrimary, fontWeight:500, fontFamily:"'Aeonik',sans-serif" }}>OPTI<span style={{fontWeight:1000 , fontSize:22, fontFamily:"'Aeonik',sans-serif"}}>Q</span></div>
                 <div style={{ fontSize:11, color:C.textMuted }}>Vessel Performance Platform</div>
               </div>
             )}
           </div>
           {!isMobile && (
             <nav style={{ display:"flex", gap:0, alignItems:"center" }}>
-              {["API Docs","ISO 19030 Standard","Platform Status"].map((l,i) => (
+              {["API Docs","Platform Status"].map((l,i) => (
                 <span key={i} style={{
                   fontSize:13, color:C.textSecondary, cursor:"pointer",
                   padding:"0 20px",
@@ -226,7 +235,7 @@ const handleAnalyze = async (e) => {
                   display:"flex", alignItems:"center", justifyContent:"center",
                 }}>{m.icon}</div>
                 <div>
-                  <div style={{ fontSize:15, fontWeight:700, color:C.textPrimary, fontFamily:"'Syne',sans-serif", marginBottom:5 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", marginBottom:5 }}>
                     {m.title}
                   </div>
                   <div style={{ fontSize:13, color:C.textMuted, lineHeight:1.55 }}>{m.desc}</div>
@@ -251,7 +260,7 @@ const handleAnalyze = async (e) => {
                 <rect x="2" y="15" width="7" height="7" rx="1"/>
                 <path d="M15 15h7v7"/>
               </svg>
-              <span style={{ fontSize:17, fontWeight:700, color:C.textPrimary, fontFamily:"'Syne',sans-serif" }}>
+              <span style={{ fontSize:17, fontWeight:700, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif" }}>
                 Access Detailed Performance Analysis
               </span>
             </div>
@@ -267,7 +276,7 @@ const handleAnalyze = async (e) => {
                 width:"100%", padding:"14px 16px", borderRadius:10,
                 border:`1px solid ${err ? "#f87171" : C.border}`,
                 background:C.inputBg, color:C.textPrimary, fontSize:15,
-                fontFamily:"'DM Sans',sans-serif",
+                fontFamily:"'Aeonik',sans-serif",
                 backdropFilter:"blur(8px)", marginBottom: err ? 6 : 20,
               }}
             />
@@ -293,12 +302,23 @@ const handleAnalyze = async (e) => {
             </button>
 
             <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:12, color:C.textMuted, marginBottom:4 }}>
-                All analyses use established ISO 19030 methodologies.
-              </div>
-              <span style={{ fontSize:12, color:C.accent, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3 }}>
-                Need assistance?
-              </span>
+             
+              < a onClick={() => {
+  const subject = encodeURIComponent("OPTIQ Support Request");
+  const body = encodeURIComponent(
+    "Hello OPTIQ Support,\n\nI need assistance with:\n\nDescription:\n\nRegards,"
+  );
+
+  window.location.href = `mailto:support@azolla.sg?subject=${subject}&body=${body}`;
+}}
+  style={{
+    fontSize:12, color:C.accent,
+    textDecoration:"underline", textUnderlineOffset:3,
+    cursor:"pointer",
+  }}
+>
+  Need assistance?
+</a>
             </div>
           </div>
         </div>
@@ -312,12 +332,12 @@ const handleAnalyze = async (e) => {
           fontSize:12, color:C.textMuted,
         }}>
           <div style={{ display:"flex", gap:20 }}>
-            {["API Docs","ISO 19030 Standard","Platform Status"].map((l,i)=>(
+            {["API Docs","Platform Status"].map((l,i)=>(
               <span key={i} style={{ cursor:"pointer" }}>{l}</span>
             ))}
             <span>|</span>
           </div>
-          <span>© 2024 Optiq Solutions</span>
+          <span>© 2026 Azolla, All Rights Reserved </span>
         </div>
       </div>
     </div>
@@ -420,32 +440,7 @@ function Dashboard({ imo, onBack, shipData }) {
         )}
 
         {/* Top stat bar */}
-        <div style={{
-          display:"flex", gap:0,
-          borderBottom:`1px solid ${C.borderSubtle}`,
-          flexShrink:0,
-        }}>
-          {topStats.map((s,i) => (
-            <div key={i} style={{
-              flex:1, padding:"14px 20px",
-              borderRight: i < topStats.length-1 ? `1px solid ${C.borderSubtle}` : "none",
-              background:C.statBg,
-            }}>
-              <div style={{ fontSize:10, color:C.textMuted, letterSpacing:"0.08em", marginBottom:4 }}>{s.label}</div>
-              <div style={{ fontSize: isMobile ? 18 : 22, fontWeight:800, color:s.color, fontFamily:"'Syne',sans-serif" }}>{s.value}</div>
-            </div>
-          ))}
-          {/* Fouling status */}
-          <div style={{
-            padding:"14px 20px",
-            background:"rgba(239,68,68,0.1)",
-            borderLeft:`1px solid rgba(239,68,68,0.2)`,
-            minWidth: isMobile ? "auto" : 160,
-          }}>
-            <div style={{ fontSize:10, color:"rgba(239,68,68,0.7)", letterSpacing:"0.08em", marginBottom:4 }}>FOULING STATUS:</div>
-            <div style={{ fontSize: isMobile ? 18 : 22, fontWeight:800, color:C.critical, fontFamily:"'Syne',sans-serif" }}>CRITICAL</div>
-          </div>
-        </div>
+   
 
         {/* Tab content */}
         <div style={{ flex:1, overflow:"auto", padding: isMobile ? "16px 12px" : "24px 28px" }}>
@@ -470,7 +465,7 @@ function ChartCard({ title, children, controls }) {
       animation:"fadeIn 0.4s both",
     }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary, fontFamily:"'Syne',sans-serif" }}>{title}</span>
+        <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif" }}>{title}</span>
         {controls}
       </div>
       {children}
@@ -516,7 +511,7 @@ function DashboardTab({ isMobile, shipData }) {
         }}>
           <span style={{
             fontSize:14, fontWeight:600,
-            color:C.textPrimary, fontFamily:"'Syne',sans-serif"
+            color:C.textPrimary, fontFamily:"'Aeonik',sans-serif"
           }}>
             Speed vs Power — IMO {shipData?.imo}
           </span>
@@ -599,7 +594,6 @@ function HullTab({ isMobile }) {
   ];
 
   const scorecard = [
-    { label:"ISO 19030 RATING:", value:"3.8/5",   color:C.warning },
     { label:"FRICTIONAL ΔCf:",   value:"0.00045", color:C.critical },
     { label:"POWER PENALTY:",    value:"+8.7%",   color:C.critical },
     { label:"EST. FUEL COST/YEAR:", value:"$380k", color:C.critical },
@@ -640,7 +634,7 @@ function HullTab({ isMobile }) {
           <div style={{ padding:"12px 14px", borderBottom:`1px solid ${C.borderSubtle}` }}>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <div style={{ width:20, height:20, borderRadius:4, background:C.accentDim, border:`1px solid ${C.border}`, display:"flex",alignItems:"center",justifyContent:"center", fontSize:10, color:C.accent, fontWeight:700 }}>1</div>
-              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Syne',sans-serif", letterSpacing:"0.05em" }}>HULL PHOTOS</span>
+              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>HULL PHOTOS</span>
             </div>
           </div>
           <div style={{ padding:"10px", display:"flex", flexDirection:"column", gap:8 }}>
@@ -669,11 +663,11 @@ function HullTab({ isMobile }) {
           <div style={{ padding:"12px 14px", borderBottom:`1px solid ${C.borderSubtle}` }}>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <div style={{ width:20, height:20, borderRadius:4, background:C.accentDim, border:`1px solid ${C.border}`, display:"flex",alignItems:"center",justifyContent:"center", fontSize:10, color:C.accent, fontWeight:700 }}>2</div>
-              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Syne',sans-serif", letterSpacing:"0.05em" }}>AI VISUALIZER</span>
+              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>AI VISUALIZER</span>
             </div>
           </div>
           <div style={{ padding:"14px" }}>
-            <div style={{ fontSize:11, color:C.critical, fontFamily:"'JetBrains Mono',monospace", marginBottom:12 }}>
+            <div style={{ fontSize:11, color:C.critical, fontFamily:"'Aeonik',sans-serif", marginBottom:12 }}>
               DETECTION: <strong>HEAVY growth</strong>
             </div>
             {/* Fake heatmap visualizer */}
@@ -694,10 +688,10 @@ function HullTab({ isMobile }) {
               <div style={{
                 padding:"6px 14px", background:"rgba(239,68,68,0.15)",
                 border:"1px solid rgba(239,68,68,0.3)", borderRadius:6,
-                fontSize:11, color:C.critical, fontFamily:"'JetBrains Mono',monospace",
+                fontSize:11, color:C.critical, fontFamily:"'Aeonik',sans-serif",
               }}>HEAVY FOULING DETECTED</div>
             </div>
-            <div style={{ fontSize:11, color:C.critical, fontFamily:"'JetBrains Mono',monospace", marginTop:12 }}>
+            <div style={{ fontSize:11, color:C.critical, fontFamily:"'Aeonik',sans-serif", marginTop:12 }}>
               DETECTION: <strong>HEAVY growth</strong>
             </div>
           </div>
@@ -708,14 +702,14 @@ function HullTab({ isMobile }) {
           <div style={{ padding:"12px 14px", borderBottom:`1px solid ${C.borderSubtle}` }}>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <div style={{ width:20, height:20, borderRadius:4, background:C.accentDim, border:`1px solid ${C.border}`, display:"flex",alignItems:"center",justifyContent:"center", fontSize:10, color:C.accent, fontWeight:700 }}>3</div>
-              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Syne',sans-serif", letterSpacing:"0.05em" }}>PENALTY SCORECARD</span>
+              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>PENALTY SCORECARD</span>
             </div>
           </div>
           <div style={{ padding:"14px", display:"flex", flexDirection:"column", gap:12 }}>
             {scorecard.map((s,i) => (
               <div key={i} style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
                 <div style={{ fontSize:9, color:C.textMuted, letterSpacing:"0.08em", marginBottom:5 }}>{s.label}</div>
-                <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Syne',sans-serif" }}>{s.value}</div>
+                <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
               </div>
             ))}
           </div>
@@ -849,7 +843,7 @@ function WeatherTab({ isMobile, onEnter }) {
           ].map((s,i) => (
             <div key={i} style={{ background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:10, padding:"14px 16px" }}>
               <div style={{ fontSize:10, color:C.textMuted, marginBottom:6 }}>{s.label}</div>
-              <div style={{ fontSize:20, fontWeight:700, color:s.color, fontFamily:"'Syne',sans-serif" }}>{s.value}</div>
+              <div style={{ fontSize:20, fontWeight:700, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
             </div>
           ))}
         </div>
@@ -917,10 +911,10 @@ function ESDTab({ isMobile }) {
           </ResponsiveContainer>
 
           <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>
-            <span style={{ fontSize:10, color:C.accent, fontFamily:"'JetBrains Mono',monospace" }}>DESIGN CURVE</span>
-            <span style={{ fontSize:10, color:C.critical, fontFamily:"'JetBrains Mono',monospace", marginLeft:16 }}>CURRENT ACTUAL</span>
-            {selected.length > 0 && <span style={{ fontSize:10, color:C.success, fontFamily:"'JetBrains Mono',monospace", marginLeft:16 }}>ESD SIMULATED CURVE</span>}
-            {selected.length > 0 && <span style={{ fontSize:10, color:"rgba(16,185,129,0.5)", fontFamily:"'JetBrains Mono',monospace", marginLeft:16 }}>POTENTIAL SAVINGS GAP</span>}
+            <span style={{ fontSize:10, color:C.accent, fontFamily:"'Aeonik',sans-serif" }}>DESIGN CURVE</span>
+            <span style={{ fontSize:10, color:C.critical, fontFamily:"'Aeonik',sans-serif", marginLeft:16 }}>CURRENT ACTUAL</span>
+            {selected.length > 0 && <span style={{ fontSize:10, color:C.success, fontFamily:"'Aeonik',sans-serif", marginLeft:16 }}>ESD SIMULATED CURVE</span>}
+            {selected.length > 0 && <span style={{ fontSize:10, color:"rgba(16,185,129,0.5)", fontFamily:"'Aeonik',sans-serif", marginLeft:16 }}>POTENTIAL SAVINGS GAP</span>}
           </div>
 
           <div style={{ display:"flex", gap:24, marginTop:14, paddingTop:12, borderTop:`1px solid ${C.borderSubtle}`, flexWrap:"wrap" }}>
@@ -972,7 +966,7 @@ function ESDTab({ isMobile }) {
               width:"100%", marginTop:8, padding:"10px",
               background:"rgba(56,189,248,0.1)", border:`1px solid ${C.accent}`,
               color:C.accent, borderRadius:8, fontSize:12, fontWeight:700,
-              cursor:"pointer", fontFamily:"'DM Sans',sans-serif",
+              cursor:"pointer", fontFamily:"'Aeonik',sans-serif",
             }}>Generate Comparison Report</button>
           </div>
         </div>
