@@ -594,9 +594,9 @@ function HullTab({ isMobile }) {
   ];
 
   const scorecard = [
-    { label:"FRICTIONAL ΔCf:",   value:"0.00045", color:C.critical },
-    { label:"POWER PENALTY:",    value:"+8.7%",   color:C.critical },
-    { label:"EST. FUEL COST/YEAR:", value:"$380k", color:C.critical },
+    { label:"FOULING GRADE:",   value:"5", color:C.critical },
+    { label:"FOULING AGENTS DETECTED:",    value:"Slime Barnacles",   color:C.warning },
+    { label:"IMPACT ON POWER CONSUMPTION:", value:"2.5%", color:C.success },
   ];
 
   return (
