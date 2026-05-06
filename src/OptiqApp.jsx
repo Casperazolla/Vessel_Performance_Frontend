@@ -332,9 +332,24 @@ const handleAnalyze = async (e) => {
           fontSize:12, color:C.textMuted,
         }}>
           <div style={{ display:"flex", gap:20 }}>
-            {["API Docs","Platform Status"].map((l,i)=>(
-              <span key={i} style={{ cursor:"pointer" }}>{l}</span>
-            ))}
+           {["API Docs"].map((l, i) => (
+  <span key={i} style={{ cursor:"pointer" }}>{l}</span>
+))}
+<a 
+  href="https://www.azolla.sg"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    cursor:"pointer",
+    color: C.textMuted,
+    textDecoration:"none",
+    transition:"color .2s",
+  }}
+  onMouseEnter={e => e.currentTarget.style.color = C.accent}
+  onMouseLeave={e => e.currentTarget.style.color = C.textMuted}
+>
+ AZOLLA
+</a>
             <span>|</span>
           </div>
           <span>© 2026 Azolla, All Rights Reserved </span>
