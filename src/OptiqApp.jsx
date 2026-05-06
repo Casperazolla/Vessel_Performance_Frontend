@@ -187,7 +187,7 @@ const handleAnalyze = async (e) => {
             <Logo />
             {!isMobile && (
               <div style={{ borderLeft:`1px solid ${C.borderSubtle}`, paddingLeft:14 }}>
-                <div style={{ fontSize:20, color:C.textPrimary, fontWeight:500, fontFamily:"'Aeonik',sans-serif" }}>OPTI<span style={{fontWeight:1000 , fontSize:22, fontFamily:"'Aeonik',sans-serif"}}>Q</span></div>
+                <div style={{ fontSize:24, color:C.textPrimary, fontWeight:500, fontFamily:"'Aeonik',sans-serif", letterSpacing:3 }}>OPTI<span style={{ fontSize:27, fontFamily:"'Aeonik',sans-serif"}}>Q</span></div>
                 <div style={{ fontSize:11, color:C.textMuted }}>Vessel Performance Platform</div>
               </div>
             )}
