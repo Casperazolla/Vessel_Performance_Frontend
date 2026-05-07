@@ -141,7 +141,7 @@ const handleAnalyze = async (e) => {
     formdata.append("text_input", imo.trim());
 
     const response = await fetch(
-      "https://65.1.246.191:8000/Vessel_Performance_Project/run",
+      "https://api.azolla.sg/Vessel_Performance_Project/run",
       {
         method: "POST",
         body: formdata,
