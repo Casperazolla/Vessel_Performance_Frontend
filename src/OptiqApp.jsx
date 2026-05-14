@@ -124,7 +124,7 @@ urlencoded.append("username", username);
 urlencoded.append("password", password);
 
 const response = await fetch(
-  "http://65.1.246.191:8000/login",
+  "https://api.azolla.sg/login",
   {
     method: "POST",
     headers: myHeaders,
