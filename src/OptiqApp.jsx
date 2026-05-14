@@ -849,54 +849,54 @@ const SCORECARD_DATA = {
   vertical_side: [
     {
       label:"FOULING GRADE:",
-      value:"5",
-      color:C.critical,
+      value:"3",
+      color:C.warning,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Heavy Slime",
+      value:"Slime",
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"+3.8%",
-      color:C.critical,
+      value:"10%",
+      color:C.warning,
     },
   ],
 
   propeller: [
     {
       label:"FOULING GRADE:",
-      value:"3",
-      color:C.warning,
+      value:"5",
+      color:C.critical,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Calcareous Growth",
-      color:C.warning,
+      value:"Barnacles, Calcareous",
+      color:C.critical,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"+1.4%",
-      color:C.success,
+      value:"25%",
+      color:C.critical,
     },
   ],
 
   rudder: [
     {
       label:"FOULING GRADE:",
-      value:"4",
+      value:"2",
       color:C.warning,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Biofilm",
+      value:"Slime",
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"+2.2%",
-      color:C.warning,
+      value:"7%",
+      color:C.success,
     },
   ],
 
@@ -908,31 +908,31 @@ const SCORECARD_DATA = {
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Barnacles",
-      color:C.critical,
+      value:"Barnacles, Tubeworm",
+      color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"+5.1%",
-      color:C.critical,
+      value:"35%",
+      color:C.warning,
     },
   ],
 
   bilge_keels: [
     {
       label:"FOULING GRADE:",
-      value:"2",
-      color:C.success,
+      value:"4",
+      color:C.warning,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Minor Slime",
-      color:C.success,
+      value:"Slime, Barnacles, Algae",
+      color:C.critical,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"+0.6%",
-      color:C.success,
+      value:"20%",
+      color:C.critical,
     },
   ],
 
@@ -944,12 +944,12 @@ const SCORECARD_DATA = {
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Marine Growth",
+      value:"Barnacle, Slime",
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"+2.8%",
+      value:"18%",
       color:C.warning,
     },
   ],
@@ -1205,16 +1205,7 @@ src={uploadedImages[img.id][0].annotatedImage}            alt={img.label}
         {/* Column 2 — AI Visualizer */}
        <div style={{ padding:"14px" }}>
 
-  <div
-    style={{
-      fontSize:11,
-      color:C.critical,
-      fontFamily:"'Aeonik',sans-serif",
-      marginBottom:12
-    }}
-  >
-    DETECTION: <strong>HEAVY growth</strong>
-  </div>
+ 
 
   {uploadedImages[selectedType]?.[selectedImageIndex] ? (
 
