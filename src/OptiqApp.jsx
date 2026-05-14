@@ -211,6 +211,11 @@ if (response.ok) {
 
         <input
           type="text"
+          onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    handleLogin();
+  }
+}}
           placeholder="Username"
           value={username}
           onChange={(e)=>setUserName(e.target.value)}
@@ -227,6 +232,11 @@ if (response.ok) {
 
         <input
           type="password"
+          onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    handleLogin();
+  }
+}}
           placeholder="Password"
           value={password}
           onChange={(e)=>setPassword(e.target.value)}
@@ -285,12 +295,12 @@ function LandingPage({ onEnter }) {
     {
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8"><path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 20h18"/></svg>,
       title: "Hull Analysis",
-      desc: "AI-Powered Hull Fouling Analysis. Upload photos for detailed fouling assessment and resistance calculation.",
+      desc: "AI powered hull fouling analysis and its impact on the Resistance and Power consumption based on the images uploaded.",
     },
     {
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>,
       title: "ESD Simulator",
-      desc: "Test and compare Mewis Duct, PBCF, about 50% and existing options to determine savings.",
+      desc: "ESD module which quantifies the power saving and the overall impact of different ESDs on the performance curve.",
     },
     {
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>,
@@ -453,6 +463,11 @@ const handleAnalyze = async (e) => {
             <div style={{ fontSize:13, color:C.textSecondary, marginBottom:8 }}>Enter IMO Number</div>
             <input
               type="text" maxLength={7}
+              onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    handleAnalyze();
+  }
+}}
               placeholder="e.g 9483451"
               value={imo}
               onChange={e => { setImo(e.target.value); setErr(""); }}
@@ -787,9 +802,159 @@ function DashboardTab({ isMobile, shipData }) {
 
 function HullTab({ isMobile, imo }) {
   const [selected, setSelected] = useState(0);
-const [uploadedImages, setUploadedImages] = useState({});
+const [uploadedImages, setUploadedImages] = useState({
+
+  vertical_side: [
+    {
+      annotatedImage: "/demo/vertical.png"
+    }
+  ],
+
+  propeller: [
+    {
+      annotatedImage: "/demo/propeller.png"
+    }
+  ],
+
+  rudder: [
+    {
+      annotatedImage: "/demo/rudder.png"
+    }
+  ],
+
+  flat_bottom: [
+    {
+      annotatedImage: "/demo/flatbottom.png"
+    }
+  ],
+
+  bilge_keels: [
+    {
+      annotatedImage: "/demo/bilgekeel.png"
+    }
+  ],
+
+  sea_chest: [
+    {
+      annotatedImage: "/demo/seachest.png"
+    }
+  ],
+
+});
 const [selectedType, setSelectedType] = useState("vertical_side");
 const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
+
+const SCORECARD_DATA = {
+
+  vertical_side: [
+    {
+      label:"FOULING GRADE:",
+      value:"5",
+      color:C.critical,
+    },
+    {
+      label:"FOULING AGENTS DETECTED:",
+      value:"Heavy Slime",
+      color:C.warning,
+    },
+    {
+      label:"IMPACT ON POWER CONSUMPTION:",
+      value:"+3.8%",
+      color:C.critical,
+    },
+  ],
+
+  propeller: [
+    {
+      label:"FOULING GRADE:",
+      value:"3",
+      color:C.warning,
+    },
+    {
+      label:"FOULING AGENTS DETECTED:",
+      value:"Calcareous Growth",
+      color:C.warning,
+    },
+    {
+      label:"IMPACT ON POWER CONSUMPTION:",
+      value:"+1.4%",
+      color:C.success,
+    },
+  ],
+
+  rudder: [
+    {
+      label:"FOULING GRADE:",
+      value:"4",
+      color:C.warning,
+    },
+    {
+      label:"FOULING AGENTS DETECTED:",
+      value:"Biofilm",
+      color:C.warning,
+    },
+    {
+      label:"IMPACT ON POWER CONSUMPTION:",
+      value:"+2.2%",
+      color:C.warning,
+    },
+  ],
+
+  flat_bottom: [
+    {
+      label:"FOULING GRADE:",
+      value:"6",
+      color:C.critical,
+    },
+    {
+      label:"FOULING AGENTS DETECTED:",
+      value:"Barnacles",
+      color:C.critical,
+    },
+    {
+      label:"IMPACT ON POWER CONSUMPTION:",
+      value:"+5.1%",
+      color:C.critical,
+    },
+  ],
+
+  bilge_keels: [
+    {
+      label:"FOULING GRADE:",
+      value:"2",
+      color:C.success,
+    },
+    {
+      label:"FOULING AGENTS DETECTED:",
+      value:"Minor Slime",
+      color:C.success,
+    },
+    {
+      label:"IMPACT ON POWER CONSUMPTION:",
+      value:"+0.6%",
+      color:C.success,
+    },
+  ],
+
+  sea_chest: [
+    {
+      label:"FOULING GRADE:",
+      value:"4",
+      color:C.warning,
+    },
+    {
+      label:"FOULING AGENTS DETECTED:",
+      value:"Marine Growth",
+      color:C.warning,
+    },
+    {
+      label:"IMPACT ON POWER CONSUMPTION:",
+      value:"+2.8%",
+      color:C.warning,
+    },
+  ],
+
+};
 
 const handleUpload = async (section, file) => {
   if (!file) return;
@@ -868,11 +1033,8 @@ setUploadedImages(prev => {
   { id: "flat_bottom",    label: "Flat Bottom",    s3Key: "Flat_Bottom_img1",    required: true  },
 ];
 
-  const scorecard = [
-    { label:"FOULING GRADE:",   value:"5", color:C.critical },
-    { label:"FOULING AGENTS DETECTED:",    value:"Slime Barnacles",   color:C.warning },
-    { label:"IMPACT ON POWER CONSUMPTION:", value:"2.5%", color:C.success },
-  ];
+ const scorecard =
+  SCORECARD_DATA[selectedType];
 
 
 const validateRequiredImages = () => {
@@ -976,8 +1138,11 @@ const validateRequiredImages = () => {
   {HULL_SECTIONS.map((img, i) => (
     <div
       key={img.id}
-      onClick={() => setSelected(i)}
-      style={{
+onClick={() => {
+  setSelected(i);
+  setSelectedType(img.id);
+  setSelectedImageIndex(0);
+}}      style={{
         padding:"10px",
         borderRadius:8,
         cursor:"pointer",
@@ -1019,10 +1184,8 @@ const validateRequiredImages = () => {
           </div>
         </div>
 
-        {uploadedImages[img.id]?.imageUrl && (
-          <img
-            src={uploadedImages[img.id].imageUrl}
-            alt={img.label}
+{uploadedImages[img.id]?.[0]?.annotatedImage && (          <img
+src={uploadedImages[img.id][0].annotatedImage}            alt={img.label}
             style={{
               width:40,
               height:40,
