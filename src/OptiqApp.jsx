@@ -91,6 +91,190 @@ const GlobalStyles = () => (
   `}</style>
 );
 
+
+function LoginPage({ onLogin }) {
+
+  const [username, setUserName] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+ const handleLogin = async () => {
+
+  if (!username || !password) {
+    setErr("Please enter credentials");
+    return;
+  }
+
+  setErr("");
+  setLoading(true);
+
+  try {
+
+   const myHeaders = new Headers();
+
+myHeaders.append(
+  "Content-Type",
+  "application/x-www-form-urlencoded"
+);
+
+const urlencoded = new URLSearchParams();
+
+urlencoded.append("username", username);
+urlencoded.append("password", password);
+
+const response = await fetch(
+  "http://65.1.246.191:8000/login",
+  {
+    method: "POST",
+    headers: myHeaders,
+    body: urlencoded,
+    redirect: "follow"
+  }
+);
+
+const result = await response.text();
+   console.log("LOGIN RESPONSE:", result);
+
+if (response.ok) {
+
+  localStorage.setItem(
+    "token",
+    result
+  );
+
+  onLogin();
+
+} else {
+
+  setErr("Invalid username or password");
+
+}
+
+  } catch(err) {
+
+    console.error(err);
+    setErr("Server error");
+
+  }
+
+  setLoading(false);
+};
+
+  return (
+
+    <div style={{
+      minHeight:"100vh",
+      backgroundImage:"url('/Background.png')",
+      backgroundSize:"cover",
+      display:"flex",
+      alignItems:"center",
+      justifyContent:"center",
+      padding:"20px",
+    }}>
+
+      <div style={{
+        width:"100%",
+        maxWidth:420,
+        background:"rgba(10,25,50,0.75)",
+        border:`1px solid ${C.border}`,
+        borderRadius:18,
+        padding:"32px",
+        backdropFilter:"blur(18px)",
+      }}>
+
+        <div style={{
+          display:"flex",
+          justifyContent:"center",
+          marginBottom:20,
+        }}>
+          <Logo />
+        </div>
+
+        <h2 style={{
+          color:C.textPrimary,
+          fontSize:24,
+          marginBottom:8,
+          textAlign:"center",
+        }}>
+          OPTIQ Login
+        </h2>
+
+        <p style={{
+          color:C.textMuted,
+          fontSize:13,
+          textAlign:"center",
+          marginBottom:28,
+        }}>
+          Access vessel performance platform
+        </p>
+
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e)=>setUserName(e.target.value)}
+          style={{
+            width:"100%",
+            padding:"14px",
+            marginBottom:14,
+            borderRadius:10,
+            border:`1px solid ${C.border}`,
+            background:C.inputBg,
+            color:C.textPrimary,
+          }}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e)=>setPassword(e.target.value)}
+          style={{
+            width:"100%",
+            padding:"14px",
+            marginBottom:14,
+            borderRadius:10,
+            border:`1px solid ${C.border}`,
+            background:C.inputBg,
+            color:C.textPrimary,
+          }}
+        />
+
+        {err && (
+          <div style={{
+            color:"#f87171",
+            fontSize:12,
+            marginBottom:12,
+          }}>
+            {err}
+          </div>
+        )}
+
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          style={{
+            width:"100%",
+            padding:"14px",
+            borderRadius:10,
+            border:"none",
+            background:C.accentBtn,
+            color:"#fff",
+            fontWeight:700,
+            cursor:"pointer",
+          }}
+        >
+          {loading ? "Logging in..." : "LOGIN"}
+        </button>
+
+      </div>
+
+    </div>
+
+  );
+}
+
 function LandingPage({ onEnter }) {
   const [imo, setImo] = useState("");
   const [err, setErr] = useState("");
@@ -461,8 +645,12 @@ function Dashboard({ imo, onBack, shipData }) {
         <div style={{ flex:1, overflow:"auto", padding: isMobile ? "16px 12px" : "24px 28px" }}>
 
 {activeTab === "dashboard" && <DashboardTab isMobile={isMobile} shipData={shipData} />}
-          {activeTab === "hull"      && <HullTab      isMobile={isMobile} />}
-          {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
+{activeTab === "hull" && (
+  <HullTab
+    isMobile={isMobile}
+    imo={imo}
+  />
+)}          {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
           {activeTab === "esd"       && <ESDTab       isMobile={isMobile} />}
 {activeTab === "reports" && <ReportsTab isMobile={isMobile} imo={imo} shipData={shipData} />}
         </div>
@@ -597,19 +785,88 @@ function DashboardTab({ isMobile, shipData }) {
 }
 
 
-function HullTab({ isMobile }) {
+function HullTab({ isMobile, imo }) {
   const [selected, setSelected] = useState(0);
-  const [file, setFile] = useState(null);
-  const fileRef = useRef();
+const [uploadedImages, setUploadedImages] = useState({});
+const [selectedType, setSelectedType] = useState("vertical_side");
+const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
 
-  const mockImages = [
-    { label:"Vertical Sides", fouling:"None", color:C.warning },
-    { label:"Propeller", fouling:"Moderate",     color:C.warning },
-    { label:"Bilge Keels", fouling:"Moderate",     color:C.warning },
-    { label:"Rudder", fouling:"None",          color:C.success },
-    { label:"Sea Chest", fouling:"None",          color:C.success },
-    { label:"Flat Bottom", fouling:"None",          color:C.success },
-  ];
+const handleUpload = async (section, file) => {
+  if (!file) return;
+
+  try {
+
+    const localPreview = URL.createObjectURL(file);
+
+setUploadedImages(prev => {
+
+  const existing = prev[section.id] || [];
+
+  return {
+    ...prev,
+    [section.id]: [
+      ...existing,
+      {
+        file,
+        imageUrl: localPreview,
+        uploading: true,
+      }
+    ]
+  };
+});
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("imo", imo);
+    formData.append("section", section.id);
+    formData.append("filename", section.s3Key);
+
+    const response = await fetch(
+      "https://api.azolla.sg/upload-hull-image",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const result = await response.json();
+
+ if (result.status === "success") {
+
+  setUploadedImages(prev => {
+
+    const existing = prev[section.id] || [];
+
+    existing.push({
+      file,
+      originalImage: result.original_image,
+      annotatedImage: result.annotated_image,
+      foulingType: result.fouling_type,
+      foulingPercentage: result.fouling_percentage,
+      uploading:false,
+    });
+
+    return {
+      ...prev,
+      [section.id]: existing
+    };
+  });
+
+}
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+  const HULL_SECTIONS = [
+  { id: "vertical_side",  label: "Vertical Sides", s3Key: "Vertical_Side_img1",  required: true  },
+  { id: "propeller",      label: "Propeller",      s3Key: "Propeller_img1",      required: true  },
+  { id: "bilge_keels",    label: "Bilge Keels",    s3Key: "Bilge_Keels_img1",    required: false },
+  { id: "rudder",         label: "Rudder",         s3Key: "Rudder_img1",         required: true  },
+  { id: "sea_chest",      label: "Sea Chest",      s3Key: "Sea_Chest_img1",      required: false },
+  { id: "flat_bottom",    label: "Flat Bottom",    s3Key: "Flat_Bottom_img1",    required: true  },
+];
 
   const scorecard = [
     { label:"FOULING GRADE:",   value:"5", color:C.critical },
@@ -617,33 +874,92 @@ function HullTab({ isMobile }) {
     { label:"IMPACT ON POWER CONSUMPTION:", value:"2.5%", color:C.success },
   ];
 
+
+const validateRequiredImages = () => {
+  const requiredSections = HULL_SECTIONS.filter(s => s.required);
+
+  const missing = requiredSections.filter(
+    s => !uploadedImages[s.id]
+  );
+
+  if (missing.length > 0) {
+    alert(
+      `Please upload: ${missing.map(m => m.label).join(", ")}`
+    );
+    return false;
+  }
+
+  return true;
+};
+
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       {/* Upload area */}
-      <div
-        onClick={() => fileRef.current.click()}
-        style={{
-          border:`2px dashed ${file ? "rgba(16,185,129,0.5)" : C.border}`,
-          borderRadius:12, padding:"20px",
-          display:"flex", alignItems:"center", gap:12,
-          cursor:"pointer", background:C.statBg,
-          transition:"all .2s",
-        }}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={file ? C.success : C.accent} strokeWidth="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <div>
-          <div style={{ fontSize:13, color: file ? C.success : C.textPrimary, fontWeight:500 }}>
-            {file ? file.name : "Upload hull images for AI analysis"}
-          </div>
-          <div style={{ fontSize:11, color:C.textMuted, marginTop:2 }}>PNG, JPG up to 20 MB each</div>
-        </div>
-        <input ref={fileRef} type="file" accept="image/*" multiple style={{ display:"none" }}
-          onChange={e => setFile(e.target.files[0])}/>
-      </div>
+    <div
+  style={{
+    display:"flex",
+    gap:12,
+    alignItems:"center",
+    background:C.cardSolid,
+    border:`1px solid ${C.borderCard}`,
+    borderRadius:12,
+    padding:"14px",
+    flexWrap:"wrap",
+  }}
+>
+
+  <select
+    value={selectedType}
+    onChange={(e)=>setSelectedType(e.target.value)}
+    style={{
+      padding:"10px 12px",
+      borderRadius:8,
+      background:C.inputBg,
+      border:`1px solid ${C.border}`,
+      color:C.textPrimary,
+      minWidth:180,
+    }}
+  >
+    {HULL_SECTIONS.map(section => (
+      <option key={section.id} value={section.id}>
+        {section.label}
+      </option>
+    ))}
+  </select>
+
+  <label
+    style={{
+      padding:"10px 18px",
+      borderRadius:8,
+      background:C.accentBtn,
+      color:"#fff",
+      cursor:"pointer",
+      fontSize:13,
+      fontWeight:600,
+    }}
+  >
+    Upload Images
+
+    <input
+      type="file"
+      multiple
+      accept="image/*"
+      hidden
+      onChange={(e)=>{
+        const files = Array.from(e.target.files);
+
+        files.forEach(file => {
+          const section = HULL_SECTIONS.find(
+            s => s.id === selectedType
+          );
+
+          handleUpload(section, file);
+        });
+      }}
+    />
+  </label>
+
+</div>
 
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 2fr 1fr", gap:16 }}>
 
@@ -655,65 +971,124 @@ function HullTab({ isMobile }) {
               <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>HULL PHOTOS</span>
             </div>
           </div>
-          <div style={{ padding:"10px", display:"flex", flexDirection:"column", gap:8 }}>
-            {mockImages.map((img, i) => (
-              <div key={i} onClick={()=>setSelected(i)} style={{
-                borderRadius:8, overflow:"hidden", cursor:"pointer",
-                border:`2px solid ${selected===i ? C.accent : "transparent"}`,
-                background:C.statBg, padding:"10px 12px",
-                display:"flex", alignItems:"center", gap:8,
-                transition:"all .2s",
-              }}>
-                <div style={{ width:36, height:36, borderRadius:6, background:"rgba(56,189,248,0.06)", border:`1px solid ${C.border}`, display:"flex",alignItems:"center",justifyContent:"center" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.textMuted} strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize:12, color:C.textPrimary, fontWeight:500 }}>{img.label}</div>
-                  <div style={{ fontSize:10, color:img.color }}>{img.fouling}</div>
-                </div>
-              </div>
-            ))}
+         
+<div style={{ padding:"12px", display:"flex", flexDirection:"column", gap:10 }}>
+  {HULL_SECTIONS.map((img, i) => (
+    <div
+      key={img.id}
+      onClick={() => setSelected(i)}
+      style={{
+        padding:"10px",
+        borderRadius:8,
+        cursor:"pointer",
+        border:
+          selected === i
+            ? `1px solid ${C.accent}`
+            : `1px solid ${C.borderSubtle}`,
+        background:
+          selected === i
+            ? C.accentDim
+            : "transparent",
+      }}
+    >
+      <div style={{
+        display:"flex",
+        justifyContent:"space-between",
+        alignItems:"center",
+      }}>
+        <div>
+          <div style={{
+            fontSize:12,
+            color:C.textPrimary,
+            fontWeight:600,
+          }}>
+            {img.label}
+          </div>
+
+          <div
+            style={{
+              fontSize:10,
+              color: uploadedImages[img.id]
+                ? C.success
+                : C.textMuted
+            }}
+          >
+            {uploadedImages[img.id]
+              ? "Uploaded"
+              : "Pending Upload"}
           </div>
         </div>
 
-        {/* Column 2 — AI Visualizer */}
-        <div style={{ background:C.cardSolid, border:`1px solid ${C.borderCard}`, borderRadius:12, overflow:"hidden" }}>
-          <div style={{ padding:"12px 14px", borderBottom:`1px solid ${C.borderSubtle}` }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <div style={{ width:20, height:20, borderRadius:4, background:C.accentDim, border:`1px solid ${C.border}`, display:"flex",alignItems:"center",justifyContent:"center", fontSize:10, color:C.accent, fontWeight:700 }}>2</div>
-              <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>AI VISUALIZER</span>
-            </div>
-          </div>
-          <div style={{ padding:"14px" }}>
-            <div style={{ fontSize:11, color:C.critical, fontFamily:"'Aeonik',sans-serif", marginBottom:12 }}>
-              DETECTION: <strong>HEAVY growth</strong>
-            </div>
-            {/* Fake heatmap visualizer */}
-            <div style={{
-              width:"100%", aspectRatio:"4/3", borderRadius:10,
-              background:`radial-gradient(circle at 30% 40%, rgba(239,68,68,0.6) 0%, rgba(239,68,68,0.2) 30%, transparent 60%),
-                          radial-gradient(circle at 65% 60%, rgba(239,68,68,0.5) 0%, rgba(239,68,68,0.15) 25%, transparent 55%),
-                          radial-gradient(circle at 50% 25%, rgba(239,68,68,0.4) 0%, rgba(239,68,68,0.1) 20%, transparent 45%),
-                          linear-gradient(135deg, #0a1f30 0%, #081525 50%, #071220 100%)`,
-              border:`1px solid ${C.borderCard}`,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              position:"relative", overflow:"hidden",
-            }}>
-              <div style={{
-                position:"absolute", inset:0,
-                backgroundImage:"repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(56,189,248,0.03) 30px, rgba(56,189,248,0.03) 31px), repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(56,189,248,0.03) 30px, rgba(56,189,248,0.03) 31px)",
-              }}/>
-              <div style={{
-                padding:"6px 14px", background:"rgba(239,68,68,0.15)",
-                border:"1px solid rgba(239,68,68,0.3)", borderRadius:6,
-                fontSize:11, color:C.critical, fontFamily:"'Aeonik',sans-serif",
-              }}>HEAVY FOULING DETECTED</div>
-            </div>
-            <div style={{ fontSize:11, color:C.critical, fontFamily:"'Aeonik',sans-serif", marginTop:12 }}>
-              DETECTION: <strong>HEAVY growth</strong>
-            </div>
-          </div>
+        {uploadedImages[img.id]?.imageUrl && (
+          <img
+            src={uploadedImages[img.id].imageUrl}
+            alt={img.label}
+            style={{
+              width:40,
+              height:40,
+              borderRadius:6,
+              objectFit:"cover",
+              border:`1px solid ${C.border}`,
+            }}
+          />
+        )}
+      </div>
+    </div>
+  ))}
+</div>
+
         </div>
+
+        {/* Column 2 — AI Visualizer */}
+       <div style={{ padding:"14px" }}>
+
+  <div
+    style={{
+      fontSize:11,
+      color:C.critical,
+      fontFamily:"'Aeonik',sans-serif",
+      marginBottom:12
+    }}
+  >
+    DETECTION: <strong>HEAVY growth</strong>
+  </div>
+
+  {uploadedImages[selectedType]?.[selectedImageIndex] ? (
+
+    <img
+      src={
+        uploadedImages[selectedType][selectedImageIndex]
+          ?.annotatedImage
+      }
+      alt="AI Detection"
+      style={{
+        width:"100%",
+        borderRadius:10,
+        border:`1px solid ${C.borderCard}`,
+        maxHeight:"420px",
+        objectFit:"contain",
+      }}
+    />
+
+  ) : (
+
+    <div
+      style={{
+        height:"320px",
+        display:"flex",
+        alignItems:"center",
+        justifyContent:"center",
+        border:`1px dashed ${C.border}`,
+        borderRadius:10,
+        color:C.textMuted,
+      }}
+    >
+      Upload image for AI analysis
+    </div>
+
+  )}
+
+</div>
 
         {/* Column 3 — Penalty scorecard */}
         <div style={{ background:C.cardSolid, border:`1px solid ${C.borderCard}`, borderRadius:12, overflow:"hidden" }}>
@@ -1052,28 +1427,36 @@ function ReportsTab({ isMobile, imo, shipData }) {
 
 
 export default function App() {
-  const [page,     setPage]     = useState("landing");
+  const [page,     setPage]     = useState("login");
   const [imo,      setImo]      = useState("");
   const [shipData, setShipData] = useState(null);
 
   return (
     <>
       <GlobalStyles />
-      {page === "landing"
-        ? (
-          <LandingPage onEnter={(id, data) => {
-            setImo(id);
-            setShipData(data);
-            setPage("dashboard");
-          }} />
-        ) : (
-          <Dashboard
-            imo={imo}
-            shipData={shipData}
-            onBack={() => setPage("landing")}
-          />
-        )
-      }
+ {page === "login" && (
+  <LoginPage
+    onLogin={() => setPage("landing")}
+  />
+)}
+
+{page === "landing" && (
+  <LandingPage
+    onEnter={(id, data) => {
+      setImo(id);
+      setShipData(data);
+      setPage("dashboard");
+    }}
+  />
+)}
+
+{page === "dashboard" && (
+  <Dashboard
+    imo={imo}
+    shipData={shipData}
+    onBack={() => setPage("landing")}
+  />
+)}
     </>
   );
 }
