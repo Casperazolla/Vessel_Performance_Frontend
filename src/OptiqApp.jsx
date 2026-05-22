@@ -959,28 +959,29 @@ const SCORECARD_DATA = {
 const handleUpload = async (section, file) => {
   if (!file) return;
 
-  try {
+  const localPreview = URL.createObjectURL(file);
+  const uploadId = `${Date.now()}-${Math.random()}`;
 
-    const localPreview = URL.createObjectURL(file);
-
-setUploadedImages(prev => {
-
-  const existing = prev[section.id] || [];
-
-  return {
+  setUploadedImages(prev => ({
     ...prev,
     [section.id]: [
-      ...existing,
+      ...(prev[section.id] || []),
       {
-        file,
+        uploadId,
         imageUrl: localPreview,
+        annotatedImage: null,
         uploading: true,
-      }
-    ]
-  };
-});
-    const formData = new FormData();
+      },
+    ],
+  }));
 
+  setSelectedType(section.id);
+  setSelectedImageIndex(
+    -1 
+  );
+
+  try {
+    const formData = new FormData();
     formData.append("file", file);
     formData.append("imo", imo);
     formData.append("section", section.id);
@@ -996,31 +997,45 @@ setUploadedImages(prev => {
 
     const result = await response.json();
 
- if (result.status === "success") {
-
-  setUploadedImages(prev => {
-
-    const existing = prev[section.id] || [];
-
-    existing.push({
-      file,
-      originalImage: result.original_image,
-      annotatedImage: result.annotated_image,
-      foulingType: result.fouling_type,
-      foulingPercentage: result.fouling_percentage,
-      uploading:false,
-    });
-
-    return {
-      ...prev,
-      [section.id]: existing
-    };
-  });
-
-}
-
+    if (result.status === "success") {
+      setUploadedImages(prev => {
+        const list = prev[section.id] || [];
+        const updatedList = list.map(item =>
+          item.uploadId === uploadId
+            ? {
+                uploadId,
+                imageUrl: result.original_image || localPreview,
+                annotatedImage: result.annotated_image,
+                s3Url: result.s3_url || result.original_image,
+                foulingType: result.fouling_type,
+                foulingPercentage: result.fouling_percentage,
+                uploading: false,
+              }
+            : item
+        );
+        return { ...prev, [section.id]: updatedList };
+      });
+      // Jump to the newly processed image
+      setSelectedImageIndex(prev => {
+        return -1;
+      });
+    } else {
+      setUploadedImages(prev => ({
+        ...prev,
+        [section.id]: (prev[section.id] || []).filter(
+          item => item.uploadId !== uploadId
+        ),
+      }));
+      console.error("Upload failed:", result);
+    }
   } catch (err) {
-    console.error(err);
+    setUploadedImages(prev => ({
+      ...prev,
+      [section.id]: (prev[section.id] || []).filter(
+        item => item.uploadId !== uploadId
+      ),
+    }));
+    console.error("Upload error:", err);
   }
 };
 
@@ -1184,17 +1199,41 @@ onClick={() => {
           </div>
         </div>
 
-{uploadedImages[img.id]?.[0]?.annotatedImage && (          <img
-src={uploadedImages[img.id][0].annotatedImage}            alt={img.label}
-            style={{
-              width:40,
-              height:40,
-              borderRadius:6,
-              objectFit:"cover",
-              border:`1px solid ${C.border}`,
-            }}
-          />
-        )}
+{(() => {
+  const imgs = uploadedImages[img.id] || [];
+  const first = imgs[0];
+  if (!first) return null;
+  const src = first.annotatedImage || first.imageUrl;
+  return (
+    <div style={{ position:"relative", flexShrink:0 }}>
+      <img
+        src={src}
+        alt={img.label}
+        style={{
+          width:40, height:40,
+          borderRadius:6, objectFit:"cover",
+          border:`1px solid ${C.border}`,
+          opacity: first.uploading ? 0.5 : 1,
+        }}
+      />
+      {first.uploading && (
+        <div style={{
+          position:"absolute", inset:0,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          borderRadius:6,
+        }}>
+          <div style={{
+            width:16, height:16,
+            border:`2px solid rgba(56,189,248,0.3)`,
+            borderTop:`2px solid ${C.accent}`,
+            borderRadius:"50%",
+            animation:"spin 0.8s linear infinite",
+          }}/>
+        </div>
+      )}
+    </div>
+  );
+})()}
       </div>
     </div>
   ))}
@@ -1205,42 +1244,127 @@ src={uploadedImages[img.id][0].annotatedImage}            alt={img.label}
         {/* Column 2 — AI Visualizer */}
        <div style={{ padding:"14px" }}>
 
- 
+  {(() => {
+    const sectionImages = uploadedImages[selectedType] || [];
+    // Use the last image in the list for the live view (most recently uploaded)
+    const displayIndex = selectedImageIndex === -1 || selectedImageIndex >= sectionImages.length
+      ? sectionImages.length - 1
+      : selectedImageIndex;
+    const current = sectionImages[displayIndex];
 
-  {uploadedImages[selectedType]?.[selectedImageIndex] ? (
+    if (!current) {
+      return (
+        <div style={{
+          height:"320px",
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          border:`1px dashed ${C.border}`,
+          borderRadius:10,
+          color:C.textMuted,
+          fontSize:13,
+        }}>
+          Upload image for AI analysis
+        </div>
+      );
+    }
 
-    <img
-      src={
-        uploadedImages[selectedType][selectedImageIndex]
-          ?.annotatedImage
-      }
-      alt="AI Detection"
-      style={{
-        width:"100%",
-        borderRadius:10,
-        border:`1px solid ${C.borderCard}`,
-        maxHeight:"420px",
-        objectFit:"contain",
-      }}
-    />
+    if (current.uploading) {
+      return (
+        <div style={{
+          height:"320px",
+          display:"flex",
+          flexDirection:"column",
+          alignItems:"center",
+          justifyContent:"center",
+          border:`1px dashed ${C.border}`,
+          borderRadius:10,
+          gap:16,
+          position:"relative",
+          overflow:"hidden",
+        }}>
+          {/* Blurred local preview as background */}
+          {current.imageUrl && (
+            <img
+              src={current.imageUrl}
+              alt="preview"
+              style={{
+                position:"absolute", inset:0,
+                width:"100%", height:"100%",
+                objectFit:"cover",
+                filter:"blur(6px) brightness(0.4)",
+                borderRadius:10,
+              }}
+            />
+          )}
+          <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+            {/* Spinner */}
+            <div style={{
+              width:40, height:40,
+              border:`3px solid rgba(56,189,248,0.2)`,
+              borderTop:`3px solid ${C.accent}`,
+              borderRadius:"50%",
+              animation:"spin 0.8s linear infinite",
+            }}/>
+            <span style={{ fontSize:13, color:C.accent, fontWeight:600 }}>Uploading to S3 &amp; running AI detection…</span>
+            <span style={{ fontSize:11, color:C.textMuted }}>Fouling regions will be highlighted when complete</span>
+          </div>
+        </div>
+      );
+    }
 
-  ) : (
-
-    <div
-      style={{
-        height:"320px",
-        display:"flex",
-        alignItems:"center",
-        justifyContent:"center",
-        border:`1px dashed ${C.border}`,
-        borderRadius:10,
-        color:C.textMuted,
-      }}
-    >
-      Upload image for AI analysis
-    </div>
-
-  )}
+    return (
+      <div style={{ position:"relative" }}>
+        <img
+          src={current.annotatedImage || current.imageUrl}
+          alt="AI Detection — fouling regions highlighted"
+          style={{
+            width:"100%",
+            borderRadius:10,
+            border:`1px solid ${C.borderCard}`,
+            maxHeight:"420px",
+            objectFit:"contain",
+            display:"block",
+          }}
+        />
+        {/* Badge shown when annotated image is from backend */}
+        {current.annotatedImage && (
+          <div style={{
+            position:"absolute", top:10, left:10,
+            background:"rgba(10,25,50,0.85)",
+            border:`1px solid ${C.accent}`,
+            borderRadius:6,
+            padding:"4px 10px",
+            display:"flex", alignItems:"center", gap:6,
+          }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:C.success, flexShrink:0 }}/>
+            <span style={{ fontSize:11, color:C.accent, fontWeight:600 }}>AI Detection Complete</span>
+          </div>
+        )}
+        {/* Thumbnail strip if multiple images in this section */}
+        {sectionImages.length > 1 && (
+          <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>
+            {sectionImages.map((img, idx) => (
+              <img
+                key={idx}
+                src={img.annotatedImage || img.imageUrl}
+                alt={`img ${idx+1}`}
+                onClick={() => setSelectedImageIndex(idx)}
+                style={{
+                  width:48, height:48,
+                  objectFit:"cover",
+                  borderRadius:6,
+                  border:`2px solid ${displayIndex === idx ? C.accent : C.borderSubtle}`,
+                  cursor:"pointer",
+                  opacity: img.uploading ? 0.4 : 1,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  })()}
 
 </div>
 
