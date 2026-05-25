@@ -804,49 +804,25 @@ function HullTab({ isMobile, imo }) {
   const [selected, setSelected] = useState(0);
 const [uploadedImages, setUploadedImages] = useState({
 
-  vertical_side: [
-    {
-      annotatedImage: "/demo/vertical.png"
-    }
-  ],
+  vertical_sides: [],
 
-  propeller: [
-    {
-      annotatedImage: "/demo/propeller.png"
-    }
-  ],
+  propeller: [],
 
-  rudder: [
-    {
-      annotatedImage: "/demo/rudder.png"
-    }
-  ],
+  rudder: [],
 
-  flat_bottom: [
-    {
-      annotatedImage: "/demo/flatbottom.png"
-    }
-  ],
+  flat_bottom: [],
 
-  bilge_keels: [
-    {
-      annotatedImage: "/demo/bilgekeel.png"
-    }
-  ],
+  bilge_keels: [],
 
-  sea_chest: [
-    {
-      annotatedImage: "/demo/seachest.png"
-    }
-  ],
+  sea_chest: [],
 
 });
-const [selectedType, setSelectedType] = useState("vertical_side");
+const [selectedType, setSelectedType] = useState("vertical_sides");
 const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
 
 const SCORECARD_DATA = {
 
-  vertical_side: [
+  vertical_sides: [
     {
       label:"FOULING GRADE:",
       value:"3",
