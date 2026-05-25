@@ -1040,7 +1040,7 @@ const handleUpload = async (section, file) => {
 };
 
   const HULL_SECTIONS = [
-  { id: "vertical_side",  label: "Vertical Sides", s3Key: "Vertical_Side_img1",  required: true  },
+  { id: "vertical_sides",  label: "Vertical Sides", s3Key: "Vertical_Side_img1",  required: true  },
   { id: "propeller",      label: "Propeller",      s3Key: "Propeller_img1",      required: true  },
   { id: "bilge_keels",    label: "Bilge Keels",    s3Key: "Bilge_Keels_img1",    required: false },
   { id: "rudder",         label: "Rudder",         s3Key: "Rudder_img1",         required: true  },
