@@ -817,6 +817,7 @@ const [uploadedImages, setUploadedImages] = useState({
   sea_chest: [],
 
 });
+const [sectionResults, setSectionResults] = useState({});
 const [selectedType, setSelectedType] = useState("vertical_sides");
 const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
 
@@ -974,6 +975,14 @@ const handleUpload = async (section, file) => {
     const result = await response.json();
 
     if (result.status === "success") {
+      setSectionResults(prev => ({
+        ...prev,
+        [section.id]: {
+          fouling_grade:    result.fouling_grade,
+          fouling_type:     result.fouling_type,
+          fouling_percentage: result.fouling_percentage,
+        }
+      }));
       setUploadedImages(prev => {
         const list = prev[section.id] || [];
         const updatedList = list.map(item =>
@@ -1024,8 +1033,26 @@ const handleUpload = async (section, file) => {
   { id: "flat_bottom",    label: "Flat Bottom",    s3Key: "Flat_Bottom_img1",    required: true  },
 ];
 
- const scorecard =
-  SCORECARD_DATA[selectedType];
+ const liveResult = sectionResults[selectedType];
+  const scorecard = liveResult ? [
+    {
+      label: "FOULING GRADE:",
+      value: String(liveResult.fouling_grade),
+      color: liveResult.fouling_grade <= 2 ? C.success
+           : liveResult.fouling_grade <= 4 ? C.warning
+           : C.critical,
+    },
+    {
+      label: "FOULING AGENTS DETECTED:",
+      value: liveResult.fouling_type || "None",
+      color: C.warning,
+    },
+    {
+      label: "IMPACT ON POWER CONSUMPTION:",
+      value: liveResult.fouling_percentage,
+      color: C.warning,
+    },
+  ] : (SCORECARD_DATA[selectedType] || []);
 
 
 const validateRequiredImages = () => {
