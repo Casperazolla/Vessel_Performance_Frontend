@@ -664,9 +664,6 @@ function Dashboard({ imo, onBack, shipData }) {
           </div>
         )}
 
-        {/* Top stat bar */}
-   
-
         {/* Tab content */}
         <div style={{ flex:1, overflow:"auto", padding: isMobile ? "16px 12px" : "24px 28px" }}>
 
@@ -680,7 +677,8 @@ function Dashboard({ imo, onBack, shipData }) {
     sectionResults={sectionResults}
     setSectionResults={setSectionResults}
   />
-)}          {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
+)}
+          {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
           {activeTab === "esd"       && <ESDTab       isMobile={isMobile} />}
 {activeTab === "reports" && <ReportsTab isMobile={isMobile} imo={imo} shipData={shipData} />}
         </div>
@@ -817,43 +815,8 @@ function DashboardTab({ isMobile, shipData }) {
 
 function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResults, setSectionResults }) {
   const [selected, setSelected] = useState(0);
-  const [s3Status, setS3Status] = useState({}); // { [section_id]: "checking" | "uploaded" | "pending" }
-const [selectedType, setSelectedType] = useState("vertical_sides");
-const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
-
-  // Check S3 for existing images when imo is known
-  useEffect(() => {
-    if (!imo) return;
-
-    const HULL_SECTIONS_CHECK = [
-      { id: "vertical_sides", s3Key: "Vertical_Side_img1" },
-      { id: "propeller",      s3Key: "Propeller_img1" },
-      { id: "bilge_keels",    s3Key: "Bilge_Keels_img1" },
-      { id: "rudder",         s3Key: "Rudder_img1" },
-      { id: "sea_chest",      s3Key: "Sea_Chest_img1" },
-      { id: "flat_bottom",    s3Key: "Flat_Bottom_img1" },
-    ];
-
-    // Mark all as checking
-    const initialStatus = {};
-    HULL_SECTIONS_CHECK.forEach(s => { initialStatus[s.id] = "checking"; });
-    setS3Status(initialStatus);
-
-    HULL_SECTIONS_CHECK.forEach(async (section) => {
-      try {
-        const response = await fetch(
-          `https://api.azolla.sg/check-hull-image?imo=${imo}&section=${section.id}&filename=${section.s3Key}`
-        );
-        const result = await response.json();
-        setS3Status(prev => ({
-          ...prev,
-          [section.id]: result.exists ? "uploaded" : "pending",
-        }));
-      } catch {
-        setS3Status(prev => ({ ...prev, [section.id]: "pending" }));
-      }
-    });
-  }, [imo]);
+  const [selectedType, setSelectedType] = useState("vertical_sides");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
 const SCORECARD_DATA = {
 
@@ -987,9 +950,7 @@ const handleUpload = async (section, file) => {
   }));
 
   setSelectedType(section.id);
-  setSelectedImageIndex(
-    -1 
-  );
+  setSelectedImageIndex(-1);
 
   try {
     const formData = new FormData();
@@ -1007,17 +968,20 @@ const handleUpload = async (section, file) => {
     );
 
     const result = await response.json();
+    console.log("UPLOAD RESULT:", result);
 
     if (result.status === "success") {
+      // ── Store ALL result fields including agent_patches ──
       setSectionResults(prev => ({
         ...prev,
         [section.id]: {
-          fouling_grade:    result.fouling_grade,
-          fouling_type:     result.fouling_type,
+          fouling_grade:      result.fouling_grade,
+          fouling_type:       result.fouling_type,
           fouling_percentage: result.fouling_percentage,
           agent_patches:      result.agent_patches || {},
         }
       }));
+
       setUploadedImages(prev => {
         const list = prev[section.id] || [];
         const updatedList = list.map(item =>
@@ -1035,10 +999,8 @@ const handleUpload = async (section, file) => {
         );
         return { ...prev, [section.id]: updatedList };
       });
-      // Jump to the newly processed image
-      setSelectedImageIndex(prev => {
-        return -1;
-      });
+
+      setSelectedImageIndex(-1);
     } else {
       setUploadedImages(prev => ({
         ...prev,
@@ -1226,22 +1188,10 @@ onClick={() => {
           <div
             style={{
               fontSize:10,
-              color: (uploadedImages[img.id]?.length > 0)
-                ? C.success
-                : s3Status[img.id] === "checking"
-                  ? C.textMuted
-                  : s3Status[img.id] === "uploaded"
-                    ? C.success
-                    : C.textMuted
+              color: (uploadedImages[img.id]?.length > 0) ? C.success : C.textMuted
             }}
           >
-            {(uploadedImages[img.id]?.length > 0)
-              ? "Uploaded"
-              : s3Status[img.id] === "checking"
-                ? "Checking…"
-                : s3Status[img.id] === "uploaded"
-                  ? "Uploaded"
-                  : "Pending Upload"}
+            {(uploadedImages[img.id]?.length > 0) ? "Uploaded" : "Pending Upload"}
           </div>
         </div>
 
@@ -1422,14 +1372,6 @@ onClick={() => {
               <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>PENALTY SCORECARD</span>
             </div>
           </div>
-          {/* <div style={{ padding:"14px", display:"flex", flexDirection:"column", gap:12 }}>
-            {scorecard.map((s,i) => (
-              <div key={i} style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
-                <div style={{ fontSize:9, color:C.textMuted, letterSpacing:"0.08em", marginBottom:5 }}>{s.label}</div>
-                <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
-              </div>
-            ))}
-          </div> */}
           <div style={{ padding:"14px", display:"flex", flexDirection:"column", gap:12 }}>
             {scorecard.map((s,i) => (
               <div key={i} style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
@@ -1504,64 +1446,12 @@ function WeatherTab({ isMobile, onEnter }) {
   const [route, setRoute] = useState("");
   const [analyzed, setAnalyzed] = useState(false);
   const [loading, setLoading] = useState(false);
-  
 
   const weatherData = speedPowerData.map(d => ({
     ...d,
     withWeather: Math.round(d.actual * 1.18),
   }));
 
-//  const handleAnalyze = async (e) => {
-//   e?.preventDefault();
-
-//   console.log(" BUTTON CLICKED");
-
-//   if (!imo || !imo.trim()) {
-//     setErr("IMO number is required");
-//     return;
-//   }
-
-//   if (!/^\d{7}$/.test(imo.trim())) {
-//     setErr("IMO must be exactly 7 digits");
-//     return;
-//   }
-
-//   setErr("");
-//   setLoading(true);
-
-//   try {
-//     console.log(" CALLING API...");
-
-//     const formdata = new FormData();
-//     formdata.append("text_input", imo.trim());
-
-//     const response = await fetch(
-//       "http://65.1.246.191:8000/Vessel_Performance_Project/run",
-//       {
-//         method: "POST",
-//         body: formdata,
-//       }
-//     );
-
-//     console.log(" RESPONSE RECEIVED");
-
-//     const result = await response.json();
-//     console.log(" RESULT:", result);
-
-//     if (result.status === "success") {
-//       setLoading(false);
-//       onEnter(imo.trim(), result); 
-//     } else {
-//       setLoading(false);
-//       setErr("Analysis failed");
-//     }
-
-//   } catch (error) {
-//     console.error(" FETCH ERROR:", error);
-//     setLoading(false);
-//     setErr("Server error");
-//   }
-// };
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
@@ -1584,7 +1474,7 @@ function WeatherTab({ isMobile, onEnter }) {
             <input value={route} onChange={e=>setRoute(e.target.value)} placeholder="e.g. North Atlantic"
               style={{ width:"100%", padding:"10px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg, color:C.textPrimary, fontSize:13 }}/>
           </div>
-          <button >
+          <button>
             Analyze Impact
           </button>
         </div>
