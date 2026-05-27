@@ -1015,6 +1015,7 @@ const handleUpload = async (section, file) => {
           fouling_grade:    result.fouling_grade,
           fouling_type:     result.fouling_type,
           fouling_percentage: result.fouling_percentage,
+          agent_patches:      result.agent_patches || {},
         }
       }));
       setUploadedImages(prev => {
@@ -1421,6 +1422,14 @@ onClick={() => {
               <span style={{ fontSize:12, fontWeight:600, color:C.textPrimary, fontFamily:"'Aeonik',sans-serif", letterSpacing:"0.05em" }}>PENALTY SCORECARD</span>
             </div>
           </div>
+          {/* <div style={{ padding:"14px", display:"flex", flexDirection:"column", gap:12 }}>
+            {scorecard.map((s,i) => (
+              <div key={i} style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
+                <div style={{ fontSize:9, color:C.textMuted, letterSpacing:"0.08em", marginBottom:5 }}>{s.label}</div>
+                <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
+              </div>
+            ))}
+          </div> */}
           <div style={{ padding:"14px", display:"flex", flexDirection:"column", gap:12 }}>
             {scorecard.map((s,i) => (
               <div key={i} style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
@@ -1428,7 +1437,61 @@ onClick={() => {
                 <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
               </div>
             ))}
+          
+            {/* ── Gemini agent patches ─────────────────────────────────── */}
+            {liveResult?.agent_patches && Object.keys(liveResult.agent_patches).length > 0 && (
+              <div style={{ marginTop:4 }}>
+                <div style={{
+                  fontSize:9, color:C.textMuted,
+                  letterSpacing:"0.08em", marginBottom:10,
+                  fontWeight:700,
+                }}>
+                  DETECTED AGENT CLOSE-UPS
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {Object.entries(liveResult.agent_patches).map(([agent, base64Img]) => (
+                    <div key={agent} style={{
+                      background:C.statBg,
+                      border:`1px solid ${C.borderCard}`,
+                      borderRadius:8,
+                      overflow:"hidden",
+                    }}>
+                      {/* Label */}
+                      <div style={{
+                        padding:"6px 10px",
+                        display:"flex", alignItems:"center", gap:6,
+                        borderBottom:`1px solid ${C.borderSubtle}`,
+                      }}>
+                        <div style={{
+                          width:6, height:6, borderRadius:"50%",
+                          background:C.warning, flexShrink:0,
+                        }}/>
+                        <span style={{
+                          fontSize:10, fontWeight:700,
+                          color:C.warning, letterSpacing:"0.06em",
+                          textTransform:"capitalize",
+                        }}>
+                          {agent}
+                        </span>
+                      </div>
+                      {/* Cropped magnified image */}
+                      <img
+                        src={base64Img}
+                        alt={`${agent} close-up`}
+                        style={{
+                          width:"100%",
+                          display:"block",
+                          objectFit:"cover",
+                          maxHeight:120,
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+          
         </div>
       </div>
     </div>
