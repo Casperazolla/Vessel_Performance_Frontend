@@ -563,6 +563,17 @@ function Dashboard({ imo, onBack, shipData }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const isMobile = useMediaQuery(768);
 
+  // Lifted here so images survive tab switches
+  const [uploadedImages, setUploadedImages] = useState({
+    vertical_sides: [],
+    propeller: [],
+    rudder: [],
+    flat_bottom: [],
+    bilge_keels: [],
+    sea_chest: [],
+  });
+  const [sectionResults, setSectionResults] = useState({});
+
   const navItems = [
     { id:"dashboard",  label:"Dashboard",        icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { id:"hull",       label:"Hull Analysis",    icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 20h18"/></svg> },
@@ -664,6 +675,10 @@ function Dashboard({ imo, onBack, shipData }) {
   <HullTab
     isMobile={isMobile}
     imo={imo}
+    uploadedImages={uploadedImages}
+    setUploadedImages={setUploadedImages}
+    sectionResults={sectionResults}
+    setSectionResults={setSectionResults}
   />
 )}          {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
           {activeTab === "esd"       && <ESDTab       isMobile={isMobile} />}
@@ -800,26 +815,45 @@ function DashboardTab({ isMobile, shipData }) {
 }
 
 
-function HullTab({ isMobile, imo }) {
+function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResults, setSectionResults }) {
   const [selected, setSelected] = useState(0);
-const [uploadedImages, setUploadedImages] = useState({
-
-  vertical_sides: [],
-
-  propeller: [],
-
-  rudder: [],
-
-  flat_bottom: [],
-
-  bilge_keels: [],
-
-  sea_chest: [],
-
-});
-const [sectionResults, setSectionResults] = useState({});
+  const [s3Status, setS3Status] = useState({}); // { [section_id]: "checking" | "uploaded" | "pending" }
 const [selectedType, setSelectedType] = useState("vertical_sides");
 const [selectedImageIndex, setSelectedImageIndex] = useState(0);  
+
+  // Check S3 for existing images when imo is known
+  useEffect(() => {
+    if (!imo) return;
+
+    const HULL_SECTIONS_CHECK = [
+      { id: "vertical_sides", s3Key: "Vertical_Side_img1" },
+      { id: "propeller",      s3Key: "Propeller_img1" },
+      { id: "bilge_keels",    s3Key: "Bilge_Keels_img1" },
+      { id: "rudder",         s3Key: "Rudder_img1" },
+      { id: "sea_chest",      s3Key: "Sea_Chest_img1" },
+      { id: "flat_bottom",    s3Key: "Flat_Bottom_img1" },
+    ];
+
+    // Mark all as checking
+    const initialStatus = {};
+    HULL_SECTIONS_CHECK.forEach(s => { initialStatus[s.id] = "checking"; });
+    setS3Status(initialStatus);
+
+    HULL_SECTIONS_CHECK.forEach(async (section) => {
+      try {
+        const response = await fetch(
+          `https://api.azolla.sg/check-hull-image?imo=${imo}&section=${section.id}&filename=${section.s3Key}`
+        );
+        const result = await response.json();
+        setS3Status(prev => ({
+          ...prev,
+          [section.id]: result.exists ? "uploaded" : "pending",
+        }));
+      } catch {
+        setS3Status(prev => ({ ...prev, [section.id]: "pending" }));
+      }
+    });
+  }, [imo]);
 
 const SCORECARD_DATA = {
 
@@ -1191,14 +1225,22 @@ onClick={() => {
           <div
             style={{
               fontSize:10,
-              color: uploadedImages[img.id]
+              color: (uploadedImages[img.id]?.length > 0)
                 ? C.success
-                : C.textMuted
+                : s3Status[img.id] === "checking"
+                  ? C.textMuted
+                  : s3Status[img.id] === "uploaded"
+                    ? C.success
+                    : C.textMuted
             }}
           >
-            {uploadedImages[img.id]
+            {(uploadedImages[img.id]?.length > 0)
               ? "Uploaded"
-              : "Pending Upload"}
+              : s3Status[img.id] === "checking"
+                ? "Checking…"
+                : s3Status[img.id] === "uploaded"
+                  ? "Uploaded"
+                  : "Pending Upload"}
           </div>
         </div>
 
