@@ -285,7 +285,7 @@ if (response.ok) {
   );
 }
 
-function LandingPage({ onEnter }) {
+function LandingPage({ onEnter, onLogout }) {
   const [imo, setImo] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
@@ -399,6 +399,16 @@ const handleAnalyze = async (e) => {
                   onMouseLeave={e=>e.currentTarget.style.color=C.textSecondary}
                 >{l}</span>
               ))}
+              <button onClick={onLogout} style={{
+                fontSize:13, color:"#f87171", cursor:"pointer",
+                padding:"6px 20px", marginLeft:8,
+                borderLeft:`1px solid ${C.borderSubtle}`,
+                background:"transparent", border:"none",
+                display:"flex", alignItems:"center", gap:6,
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+              </button>
             </nav>
           )}
         </div>
@@ -559,7 +569,7 @@ const handleAnalyze = async (e) => {
 }
 
 
-function Dashboard({ imo, onBack, shipData }) {
+function Dashboard({ imo, onBack, shipData, onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const isMobile = useMediaQuery(768);
 
@@ -625,7 +635,7 @@ function Dashboard({ imo, onBack, shipData }) {
           </nav>
 
           {/* Back button */}
-          <div style={{ padding:"12px 10px", borderTop:`1px solid ${C.borderSubtle}` }}>
+          <div style={{ padding:"12px 10px", borderTop:`1px solid ${C.borderSubtle}`, display:"flex", flexDirection:"column", gap:6 }}>
             <button onClick={onBack} style={{
               width:"100%", padding:"9px 12px", borderRadius:8,
               background:"rgba(255,255,255,0.04)",
@@ -635,6 +645,16 @@ function Dashboard({ imo, onBack, shipData }) {
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
               New Analysis
+            </button>
+            <button onClick={onLogout} style={{
+              width:"100%", padding:"9px 12px", borderRadius:8,
+              background:"rgba(239,68,68,0.07)",
+              border:`1px solid rgba(239,68,68,0.2)`,
+              color:"#f87171", fontSize:12, cursor:"pointer",
+              display:"flex", alignItems:"center", gap:8,
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Logout
             </button>
           </div>
         </div>
@@ -661,6 +681,13 @@ function Dashboard({ imo, onBack, shipData }) {
                 fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap",
               }}>{n.label}</button>
             ))}
+            <button onClick={onLogout} style={{
+              flexShrink:0, padding:"7px 14px", borderRadius:20,
+              border:`1px solid rgba(239,68,68,0.3)`,
+              background:"rgba(239,68,68,0.07)",
+              color:"#f87171",
+              fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap",
+            }}>Logout</button>
           </div>
         )}
 
@@ -1703,9 +1730,44 @@ function ReportsTab({ isMobile, imo, shipData }) {
 
 
 export default function App() {
-  const [page,     setPage]     = useState("login");
-  const [imo,      setImo]      = useState("");
-  const [shipData, setShipData] = useState(null);
+  // Persist login + IMO + shipData across reloads
+  const [page, setPage] = useState(() => {
+    if (!localStorage.getItem("token")) return "login";
+    if (localStorage.getItem("imo") && localStorage.getItem("shipData")) return "dashboard";
+    return "landing";
+  });
+  const [imo, setImo] = useState(() => localStorage.getItem("imo") || "");
+  const [shipData, setShipData] = useState(() => {
+    try {
+      const saved = localStorage.getItem("shipData");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("imo");
+    localStorage.removeItem("shipData");
+    setImo("");
+    setShipData(null);
+    setPage("login");
+  };
+
+  const handleEnter = (id, data) => {
+    localStorage.setItem("imo", id);
+    localStorage.setItem("shipData", JSON.stringify(data));
+    setImo(id);
+    setShipData(data);
+    setPage("dashboard");
+  };
+
+  const handleBack = () => {
+    localStorage.removeItem("imo");
+    localStorage.removeItem("shipData");
+    setImo("");
+    setShipData(null);
+    setPage("landing");
+  };
 
   return (
     <>
@@ -1718,11 +1780,8 @@ export default function App() {
 
 {page === "landing" && (
   <LandingPage
-    onEnter={(id, data) => {
-      setImo(id);
-      setShipData(data);
-      setPage("dashboard");
-    }}
+    onLogout={handleLogout}
+    onEnter={handleEnter}
   />
 )}
 
@@ -1730,7 +1789,8 @@ export default function App() {
   <Dashboard
     imo={imo}
     shipData={shipData}
-    onBack={() => setPage("landing")}
+    onBack={handleBack}
+    onLogout={handleLogout}
   />
 )}
     </>
