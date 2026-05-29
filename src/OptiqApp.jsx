@@ -1729,6 +1729,8 @@ function ReportsTab({ isMobile, imo, shipData }) {
 }
 
 
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in ms
+
 export default function App() {
   // Persist login + IMO + shipData across reloads
   const [page, setPage] = useState(() => {
@@ -1744,14 +1746,55 @@ export default function App() {
     } catch { return null; }
   });
 
+  const inactivityTimer = useRef(null);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("imo");
     localStorage.removeItem("shipData");
+    localStorage.removeItem("lastActivity");
     setImo("");
     setShipData(null);
     setPage("login");
   };
+
+  // Reset the inactivity timer on any user activity
+  const resetTimer = useRef(null);
+  resetTimer.current = () => {
+    localStorage.setItem("lastActivity", Date.now());
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    if (localStorage.getItem("token")) {
+      inactivityTimer.current = setTimeout(() => {
+        handleLogout();
+      }, INACTIVITY_TIMEOUT);
+    }
+  };
+
+  useEffect(() => {
+    // On mount: if logged in, check if already timed out from a previous session
+    if (localStorage.getItem("token")) {
+      const lastActivity = parseInt(localStorage.getItem("lastActivity") || "0");
+      const elapsed = Date.now() - lastActivity;
+      if (lastActivity && elapsed > INACTIVITY_TIMEOUT) {
+        // Session expired while tab was closed
+        handleLogout();
+        return;
+      }
+    }
+
+    // Attach activity listeners
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
+    const handler = () => resetTimer.current();
+    events.forEach(e => window.addEventListener(e, handler, { passive: true }));
+
+    // Start the timer
+    resetTimer.current();
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, handler));
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, []);
 
   const handleEnter = (id, data) => {
     localStorage.setItem("imo", id);
