@@ -1729,7 +1729,7 @@ function ReportsTab({ isMobile, imo, shipData }) {
 }
 
 
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in ms
+const INACTIVITY_TIMEOUT = 10 * 60 * 1500; 
 
 export default function App() {
   // Persist login + IMO + shipData across reloads
