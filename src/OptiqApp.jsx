@@ -1008,7 +1008,22 @@ const handleUpload = async (section, file) => {
           agent_patches:      result.agent_patches || {},
         }
       }));
-
+      const idleDays = 90;  // replace with actual value from your UI
+      const powerLossRes = await fetch(
+        `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${idleDays}&fouling_grade=${result.fouling_grade}`
+      );
+      const powerLoss = await powerLossRes.json();
+    
+      if (powerLoss.status === "success") {
+        setSectionResults(prev => ({
+          ...prev,
+          [section.id]: {
+            ...prev[section.id],
+            roughness:      powerLoss.roughness,
+            power_loss_pct: powerLoss.power_loss_pct,
+          }
+        }));
+      }
       setUploadedImages(prev => {
         const list = prev[section.id] || [];
         const updatedList = list.map(item =>
