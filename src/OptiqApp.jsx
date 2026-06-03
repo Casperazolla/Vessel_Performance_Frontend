@@ -134,7 +134,7 @@ const response = await fetch(
 );
 
 const result = await response.text();
-   console.log("LOGIN RESPONSE:", result);
+  
 
 if (response.ok) {
 
@@ -313,7 +313,7 @@ function LandingPage({ onEnter, onLogout }) {
 const handleAnalyze = async (e) => {
   e?.preventDefault();
 
-  console.log(" BUTTON CLICKED");
+ 
 
   if (!imo || !imo.trim()) {
     setErr("IMO number is required");
@@ -329,7 +329,7 @@ const handleAnalyze = async (e) => {
   setLoading(true);
 
   try {
-    console.log(" CALLING API...");
+   
 
     const formdata = new FormData();
     formdata.append("text_input", imo.trim());
@@ -345,7 +345,7 @@ const handleAnalyze = async (e) => {
     console.log(" RESPONSE RECEIVED");
 
     const result = await response.json();
-    console.log(" RESULT:", result);
+   
 
     if (result.status === "success") {
       onEnter(imo.trim(), result);
@@ -844,6 +844,9 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
   const [selected, setSelected] = useState(0);
   const [selectedType, setSelectedType] = useState("vertical_sides");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [idleDays, setIdleDays] = useState("");
+  const [powerLossData, setPowerLossData] = useState({});
+  const [powerLossLoading, setPowerLossLoading] = useState(false);
 
 const SCORECARD_DATA = {
 
@@ -995,8 +998,7 @@ const handleUpload = async (section, file) => {
     );
 
     const result = await response.json();
-    console.log("UPLOAD RESULT:", result);
-
+    
     if (result.status === "success") {
       // ── Store ALL result fields including agent_patches ──
       setSectionResults(prev => ({
@@ -1008,22 +1010,29 @@ const handleUpload = async (section, file) => {
           agent_patches:      result.agent_patches || {},
         }
       }));
-      const idleDays = 90;  // replace with actual value from your UI
-      const powerLossRes = await fetch(
-        `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${idleDays}&fouling_grade=${result.fouling_grade}`
-      );
-      const powerLoss = await powerLossRes.json();
-    
-      if (powerLoss.status === "success") {
-        setSectionResults(prev => ({
-          ...prev,
-          [section.id]: {
-            ...prev[section.id],
-            roughness:      powerLoss.roughness,
-            power_loss_pct: powerLoss.power_loss_pct,
+
+      if (idleDays && idleDays > 0) {
+        try {
+          const powerLossRes = await fetch(
+            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
+          );
+          const powerLoss = await powerLossRes.json();
+        
+          if (powerLoss.status === "success") {
+            setSectionResults(prev => ({
+              ...prev,
+              [section.id]: {
+                ...prev[section.id],
+                roughness:      powerLoss.roughness,
+                power_loss_pct: powerLoss.power_loss_pct,
+              }
+            }));
           }
-        }));
+        } catch (err) {
+          console.error("Power loss calculation error:", err);
+        }
       }
+
       setUploadedImages(prev => {
         const list = prev[section.id] || [];
         const updatedList = list.map(item =>
@@ -1063,6 +1072,47 @@ const handleUpload = async (section, file) => {
   }
 };
 
+const fetchPowerLoss = async (foulingGrade) => {
+  if (!idleDays || idleDays <= 0) {
+    alert("Please enter valid idle days");
+    return;
+  }
+
+  setPowerLossLoading(true);
+  try {
+    const response = await fetch(
+      `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      setPowerLossData(prev => ({
+        ...prev,
+        [selectedType]: {
+          power_loss_pct: data.power_loss_pct,
+          roughness: data.roughness,
+          idle_days: data.idle_days,
+          fouling_grade: data.fouling_grade,
+        }
+      }));
+    } else {
+      alert("Error calculating power loss: " + (data.message || "Unknown error"));
+    }
+  } catch (err) {
+    console.error("Power loss calculation error:", err);
+    alert("Failed to calculate power loss");
+  } finally {
+    setPowerLossLoading(false);
+  }
+};
+
   const HULL_SECTIONS = [
   { id: "vertical_sides",  label: "Vertical Sides", s3Key: "Vertical_Side_img1",  required: true  },
   { id: "propeller",      label: "Propeller",      s3Key: "Propeller_img1",      required: true  },
@@ -1088,7 +1138,12 @@ const handleUpload = async (section, file) => {
     },
     {
       label: "IMPACT ON POWER CONSUMPTION:",
-      value: liveResult.fouling_percentage,
+      value:
+       liveResult.power_loss_pct !== undefined
+          ? `${liveResult.power_loss_pct}%`
+          : (powerLossData[selectedType]?.power_loss_pct !== undefined
+          ? `${powerLossData[selectedType].power_loss_pct}%`
+          : (liveResult.fouling_percentage || "--")),
       color: C.warning,
     },
   ] : (SCORECARD_DATA[selectedType] || []);
@@ -1284,7 +1339,6 @@ onClick={() => {
 
   {(() => {
     const sectionImages = uploadedImages[selectedType] || [];
-    // Use the last image in the list for the live view (most recently uploaded)
     const displayIndex = selectedImageIndex === -1 || selectedImageIndex >= sectionImages.length
       ? sectionImages.length - 1
       : selectedImageIndex;
@@ -1415,10 +1469,108 @@ onClick={() => {
             </div>
           </div>
           <div style={{ padding:"14px", display:"flex", flexDirection:"column", gap:12 }}>
+
+
+
             {scorecard.map((s,i) => (
-              <div key={i} style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
-                <div style={{ fontSize:9, color:C.textMuted, letterSpacing:"0.08em", marginBottom:5 }}>{s.label}</div>
-                <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
+              <div key={i}>
+                {/* Render scorecard item */}
+                <div style={{ padding:"12px 14px", background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:8 }}>
+                  <div style={{ fontSize:9, color:C.textMuted, letterSpacing:"0.08em", marginBottom:5 }}>{s.label}</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
+                </div>
+                
+                {/* Insert Idle Days input between item 1 and item 2 */}
+                {i === 1 && (
+                  <div style={{ 
+                    marginTop:12,
+                    padding:"12px 14px", 
+                    background:C.statBg, 
+                    border:`1px solid ${C.borderCard}`, 
+                    borderRadius:8,
+                    display:"flex",
+                    flexDirection:"column",
+                    gap:8
+                  }}>
+                    <label style={{
+                      fontSize:9,
+                      fontWeight:700,
+                      color:C.textMuted,
+                      letterSpacing:"0.08em",
+                    }}>IDLE DAYS</label>
+                    <div style={{ display:"flex", gap:6, flexDirection:"column" }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="10000"
+                        value={idleDays}
+                        onChange={(e) => setIdleDays(e.target.value)}
+                        placeholder="Enter idle days"
+                        style={{
+                          padding:"8px 10px",
+                          borderRadius:6,
+                          background:C.inputBg,
+                          border:`1px solid ${C.border}`,
+                          color:C.textPrimary,
+                          fontSize:12,
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const foulingGrade = sectionResults[selectedType]?.fouling_grade;
+                          if (!foulingGrade) {
+                            alert("Please upload a hull image first to get fouling grade");
+                            return;
+                          }
+                          if (!idleDays || idleDays <= 0) {
+                            alert("Please enter valid idle days");
+                            return;
+                          }
+                          
+                          setPowerLossLoading(true);
+                          fetch(
+                            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`
+                          )
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.status === "success") {
+                              setSectionResults(prev => ({
+                                ...prev,
+                                [selectedType]: {
+                                  ...prev[selectedType],
+                                  power_loss_pct: data.power_loss_pct,
+                                  roughness: data.roughness,
+                                }
+                              }));
+                            } else {
+                              alert("Error: " + (data.message || "Failed to calculate"));
+                            }
+                          })
+                          .catch(err => {
+                            console.error(err);
+                            alert("Failed to calculate power loss");
+                          })
+                          .finally(() => setPowerLossLoading(false));
+                        }}
+                        disabled={powerLossLoading}
+                        style={{
+                          padding:"8px 12px",
+                          borderRadius:6,
+                          background: powerLossLoading ? "rgba(14,165,233,0.4)" : C.accentBtn,
+                          color:"#fff",
+                          cursor: powerLossLoading ? "not-allowed" : "pointer",
+                          fontSize:11,
+                          fontWeight:600,
+                          border:"none",
+                          transition:"all 0.2s",
+                          opacity: powerLossLoading ? 0.7 : 1,
+                        }}
+                      >
+                        {powerLossLoading ? "Calculating..." : "Calculate"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           
