@@ -1000,58 +1000,38 @@ const handleUpload = async (section, file) => {
     const result = await response.json();
     
     if (result.status === "success") {
-        // Base structure to store incoming hull processing results
-        let finalSectionStats = {
+      // ── Store ALL result fields including agent_patches ──
+      setSectionResults(prev => ({
+        ...prev,
+        [section.id]: {
           fouling_grade:      result.fouling_grade,
-          fouling_type:        result.fouling_type,
+          fouling_type:       result.fouling_type,
           fouling_percentage: result.fouling_percentage,
           agent_patches:      result.agent_patches || {},
-          power_loss_percent: null // fallback placeholder
-        };
-
-        // Fire power loss analytics ONLY if a valid positive number of idle days is provided
-        const parsedDays = parseInt(idleDays);
-        if (!isNaN(parsedDays) && parsedDays > 0) {
-          try {
-            setPowerLossLoading(true);
-            const powerLossRes = await fetch(
-              `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parsedDays}&fouling_grade=${result.fouling_grade}`
-            );
-            const powerLoss = await powerLossRes.json();
-          
-            if (powerLoss.status === "success") {
-              // Append the calculated penalty straight onto our component state container
-              finalSectionStats.power_loss_percent = powerLoss.power_loss_percent;
-            }
-          } catch (plErr) {
-            console.error("Failed calculating power loss impact context:", plErr);
-          } finally {
-            setPowerLossLoading(false);
-          }
         }
+      }));
 
-        // Save everything into your lifted parent state layout
-        setSectionResults(prev => ({
-          ...prev,
-          [section.id]: finalSectionStats
-        }));
-
-        // Remove the loading visual state indicator from the image element state
-        setUploadedImages(prev => ({
-          ...prev,
-          [section.id]: (prev[section.id] || []).map(img => 
-            img.uploadId === uploadId ? { ...img, uploading: false } : img
-          )
-        }));
-
-      } else {
-        console.error("Analysis processing engine failed processing target image.");
+      if (idleDays > 0) {
+        try {
+          const powerLossRes = await fetch(
+            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
+          );
+          const powerLoss = await powerLossRes.json();
+        
+          if (powerLoss.status === "success") {
+            setSectionResults(prev => ({
+              ...prev,
+              [section.id]: {
+                ...prev[section.id],
+                roughness:      powerLoss.roughness,
+                power_loss_pct: powerLoss.power_loss_pct,
+              }
+            }));
+          }
+        } catch (err) {
+          console.error("Power loss calculation error:", err);
+        }
       }
-
-    } catch (error) {
-      console.error("ERROR running upload operation sequence:", error);
-    }
-  };
 
       setUploadedImages(prev => {
         const list = prev[section.id] || [];
