@@ -1078,40 +1078,40 @@ const handleUpload = async (section, file) => {
 //     return;
 //   }
 
-  setPowerLossLoading(true);
-  try {
-    const response = await fetch(
-      `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+//   setPowerLossLoading(true);
+//   try {
+//     const response = await fetch(
+//       `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`,
+//       {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    if (data.status === "success") {
-      setPowerLossData(prev => ({
-        ...prev,
-        [selectedType]: {
-          power_loss_pct: data.power_loss_pct,
-          roughness: data.roughness,
-          idle_days: data.idle_days,
-          fouling_grade: data.fouling_grade,
-        }
-      }));
-    } else {
-      alert("Error calculating power loss: " + (data.message || "Unknown error"));
-    }
-  } catch (err) {
-    console.error("Power loss calculation error:", err);
-    alert("Failed to calculate power loss");
-  } finally {
-    setPowerLossLoading(false);
-  }
-};
+//     if (data.status === "success") {
+//       setPowerLossData(prev => ({
+//         ...prev,
+//         [selectedType]: {
+//           power_loss_pct: data.power_loss_pct,
+//           roughness: data.roughness,
+//           idle_days: data.idle_days,
+//           fouling_grade: data.fouling_grade,
+//         }
+//       }));
+//     } else {
+//       alert("Error calculating power loss: " + (data.message || "Unknown error"));
+//     }
+//   } catch (err) {
+//     console.error("Power loss calculation error:", err);
+//     alert("Failed to calculate power loss");
+//   } finally {
+//     setPowerLossLoading(false);
+//   }
+// };
 
   const HULL_SECTIONS = [
   { id: "vertical_sides",  label: "Vertical Sides", s3Key: "Vertical_Side_img1",  required: true  },
