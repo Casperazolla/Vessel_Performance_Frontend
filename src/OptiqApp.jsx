@@ -845,7 +845,7 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
   const [selectedType, setSelectedType] = useState("vertical_sides");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [idleDays, setIdleDays] = useState("");
-  const [powerLossData, setPowerLossData] = useState({});
+  // const [powerLossData, setPowerLossData] = useState({});
   const [powerLossLoading, setPowerLossLoading] = useState(false);
 
 const SCORECARD_DATA = {
@@ -1011,7 +1011,7 @@ const handleUpload = async (section, file) => {
         }
       }));
 
-      if (idleDays && idleDays > 0) {
+      if (idleDays > 0) {
         try {
           const powerLossRes = await fetch(
             `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
@@ -1072,11 +1072,11 @@ const handleUpload = async (section, file) => {
   }
 };
 
-const fetchPowerLoss = async (foulingGrade) => {
-  if (!idleDays || idleDays <= 0) {
-    alert("Please enter valid idle days");
-    return;
-  }
+// const fetchPowerLoss = async (foulingGrade) => {
+//   if (!idleDays || idleDays <= 0) {
+//     alert("Please enter valid idle days");
+//     return;
+//   }
 
   setPowerLossLoading(true);
   try {
@@ -1138,15 +1138,17 @@ const fetchPowerLoss = async (foulingGrade) => {
     },
     {
       label: "IMPACT ON POWER CONSUMPTION:",
-      value:
-       liveResult.power_loss_pct !== undefined
-          ? `${liveResult.power_loss_pct}%`
-          : (powerLossData[selectedType]?.power_loss_pct !== undefined
-          ? `${powerLossData[selectedType].power_loss_pct}%`
-          : (liveResult.fouling_percentage || "--")),
-      color: C.warning,
-    },
-  ] : (SCORECARD_DATA[selectedType] || []);
+    // ── Show power_loss_pct if available, otherwise show "Enter idle days"
+    value: liveResult.power_loss_pct !== undefined
+      ? `${liveResult.power_loss_pct}%`
+      : "Enter idle days →",
+    color: liveResult.power_loss_pct !== undefined
+      ? (liveResult.power_loss_pct > 20 ? C.critical
+         : liveResult.power_loss_pct > 10 ? C.warning
+         : C.success)
+      : C.textMuted,
+  },
+] : (SCORECARD_DATA[selectedType] || []);
 
 
 const validateRequiredImages = () => {
