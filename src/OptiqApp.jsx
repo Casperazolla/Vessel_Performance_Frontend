@@ -1520,21 +1520,27 @@ onClick={() => {
                       <button
                         onClick={() => {
                           const foulingGrade = sectionResults[selectedType]?.fouling_grade;
+                          const days = parseInt(idleDays);  // ✅ Fix: parse to integer first
+                        
+                          // ✅ Fix: log to see actual values being sent
+                          console.log("Sending → fouling_grade:", foulingGrade, "idle_days:", days);
+                        
                           if (!foulingGrade) {
                             alert("Please upload a hull image first to get fouling grade");
                             return;
                           }
-                          if (!idleDays || idleDays <= 0) {
+                          if (!days || days <= 0) {  // ✅ Fix: now comparing integer not string
                             alert("Please enter valid idle days");
                             return;
                           }
                           
                           setPowerLossLoading(true);
                           fetch(
-                            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`
+                            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${days}&fouling_grade=${foulingGrade}`
                           )
                           .then(res => res.json())
                           .then(data => {
+                            console.log("API response:", data);  // ✅ Fix: see exact API response
                             if (data.status === "success") {
                               setSectionResults(prev => ({
                                 ...prev,
@@ -1545,7 +1551,8 @@ onClick={() => {
                                 }
                               }));
                             } else {
-                              alert("Error: " + (data.message || "Failed to calculate"));
+                              // ✅ Fix: show full API response so you can see real error
+                              alert("API Error: " + JSON.stringify(data));
                             }
                           })
                           .catch(err => {
