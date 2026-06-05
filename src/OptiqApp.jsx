@@ -124,7 +124,7 @@ urlencoded.append("username", username);
 urlencoded.append("password", password);
 
 const response = await fetch(
-  "https://api.azolla.sg/login",
+  "https://da.azolla.sg/login",
   {
     method: "POST",
     headers: myHeaders,
@@ -335,7 +335,7 @@ const handleAnalyze = async (e) => {
     formdata.append("text_input", imo.trim());
 
     const response = await fetch(
-      "https://api.azolla.sg/Vessel_Performance_Project/run",
+      "https://da.azolla.sg/Vessel_Performance_Project/run",
       {
         method: "POST",
         body: formdata,
@@ -990,7 +990,7 @@ const handleUpload = async (section, file) => {
     formData.append("filename", section.s3Key);
 
     const response = await fetch(
-      "https://api.azolla.sg/upload-hull-image",
+      "https://da.azolla.sg/upload-hull-image",
       {
         method: "POST",
         body: formData,
@@ -1014,7 +1014,7 @@ const handleUpload = async (section, file) => {
       if (idleDays > 0) {
         try {
           const powerLossRes = await fetch(
-            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
+            `https://da.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
           );
           const powerLoss = await powerLossRes.json();
         
@@ -1081,7 +1081,7 @@ const handleUpload = async (section, file) => {
 //   setPowerLossLoading(true);
 //   try {
 //     const response = await fetch(
-//       `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`,
+//       `https://da.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`,
 //       {
 //         method: "GET",
 //         headers: {
@@ -1531,7 +1531,7 @@ onClick={() => {
                           
                           setPowerLossLoading(true);
                           fetch(
-                            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`
+                            `https://da.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`
                           )
                           .then(res => res.json())
                           .then(data => {
