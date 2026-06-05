@@ -1014,7 +1014,7 @@ const handleUpload = async (section, file) => {
       if (idleDays > 0) {
         try {
           const powerLossRes = await fetch(
-            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
+            `https://da.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
           );
           const powerLoss = await powerLossRes.json();
         
@@ -1536,7 +1536,7 @@ onClick={() => {
                           
                           setPowerLossLoading(true);
                           fetch(
-                            `https://api.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`
+                            `https://da.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`
                           )
                           .then(res => res.json())
                           .then(data => {
