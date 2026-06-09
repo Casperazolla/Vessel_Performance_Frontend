@@ -923,7 +923,7 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
     ));
 
     fetch("https://da.azolla.sg/vessel/fouled_curves", {
-      method: "POST",
+      method: "GET",
       body: fd,
     })
     .then(r => r.json())
