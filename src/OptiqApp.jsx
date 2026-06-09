@@ -584,6 +584,14 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
   });
   const [sectionResults, setSectionResults] = useState({});
 
+  const [fouledCurves, setFouledCurves]         = useState(null);
+  const [aggregatePenalty, setAggregatePenalty] = useState(null);
+
+  const handleFouledCurvesUpdate = (curves, penalty) => {
+    setFouledCurves(curves);
+    setAggregatePenalty(penalty);
+  };
+  
   const navItems = [
     { id:"dashboard",  label:"Dashboard",        icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { id:"hull",       label:"Hull Analysis",    icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 20h18"/></svg> },
@@ -694,7 +702,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
         {/* Tab content */}
         <div style={{ flex:1, overflow:"auto", padding: isMobile ? "16px 12px" : "24px 28px" }}>
 
-{activeTab === "dashboard" && <DashboardTab isMobile={isMobile} shipData={shipData} />}
+{activeTab === "dashboard" && <DashboardTab isMobile={isMobile} shipData={shipData} fouledCurves={fouledCurves} aggregatePenalty={aggregatePenalty} />}
 {activeTab === "hull" && (
   <HullTab
     isMobile={isMobile}
@@ -703,6 +711,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
     setUploadedImages={setUploadedImages}
     sectionResults={sectionResults}
     setSectionResults={setSectionResults}
+    onFouledCurvesUpdate={handleFouledCurvesUpdate}
   />
 )}
           {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
@@ -751,103 +760,182 @@ function Toggle({ label, value, onChange }) {
 const Dot = ({color}) => <span style={{ width:10, height:2, background:color, display:"inline-block", borderRadius:2, marginRight:6 }}/>;
 
 
-function DashboardTab({ isMobile, shipData }) {
+function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
+  const [showFouled, setShowFouled]           = useState(true);
+  const [selectedDraught, setSelectedDraught] = useState(null);
+
+  const curves      = fouledCurves || shipData?.draught_curves || {};
+  const draughtKeys = Object.keys(curves);
+  const activeKey   = selectedDraught || draughtKeys[draughtKeys.length - 1];
+  const activeCurve = curves[activeKey];
+
+  const chartData = activeCurve
+    ? activeCurve.speed.map((s, i) => ({
+        speed:        Math.round(s * 10) / 10,
+        brake_power:  Math.round(activeCurve.brake_power[i]),
+        fouled_power: activeCurve.fouled_power
+          ? Math.round(activeCurve.fouled_power[i])
+          : undefined,
+      }))
+    : [];
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+      <div style={{ background:C.cardSolid, border:`1px solid ${C.borderCard}`, borderRadius:14, padding:"20px" }}>
 
-      {/* Performance chart from backend */}
-      <div style={{
-        background: C.cardSolid,
-        border: `1px solid ${C.borderCard}`,
-        borderRadius: 14, padding: "20px",
-        animation: "fadeIn 0.4s both",
-      }}>
-        <div style={{
-          display:"flex", justifyContent:"space-between",
-          alignItems:"center", marginBottom:16,
-        }}>
-          <span style={{
-            fontSize:14, fontWeight:600,
-            color:C.textPrimary, fontFamily:"'Aeonik',sans-serif"
-          }}>
+        {/* Header */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, flexWrap:"wrap", gap:10 }}>
+          <span style={{ fontSize:14, fontWeight:600, color:C.textPrimary }}>
             Speed vs Power — IMO {shipData?.imo}
           </span>
+          <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
 
-          {/* PDF download button */}
-         {shipData?.pdf_url && (
-  <a
-    href={shipData.pdf_url || "#"}
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{
-      padding: "6px 14px",
-      borderRadius: 7,
-      border: `1px solid ${C.border}`,
-      background: "transparent",
-      color: C.textSecondary,
-      fontSize: 12,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      textDecoration: "none",
-    }}
-  >
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-    Download
-  </a>
-)}
+            {draughtKeys.length > 1 && (
+              <select value={activeKey || ""} onChange={e => setSelectedDraught(e.target.value)}
+                style={{ padding:"5px 10px", borderRadius:6, background:C.inputBg, border:`1px solid ${C.border}`, color:C.textPrimary, fontSize:11 }}>
+                {draughtKeys.map(k => (
+                  <option key={k} value={k}>{curves[k].draught}m draught</option>
+                ))}
+              </select>
+            )}
+
+            {aggregatePenalty !== null && (
+              <div style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer" }}
+                onClick={() => setShowFouled(v => !v)}>
+                <div style={{ width:32, height:18, borderRadius:9, position:"relative", background: showFouled ? C.critical : "rgba(255,255,255,0.12)", transition:"background .2s" }}>
+                  <div style={{ position:"absolute", top:2, left: showFouled ? 16 : 2, width:14, height:14, borderRadius:"50%", background:"#fff", transition:"left .2s" }}/>
+                </div>
+                <span style={{ fontSize:11, color:C.textSecondary }}>Fouled +{aggregatePenalty}%</span>
+              </div>
+            )}
+
+            {shipData?.pdf_url && (
+              <a href={shipData.pdf_url} target="_blank" rel="noopener noreferrer"
+                style={{ padding:"5px 12px", borderRadius:6, border:`1px solid ${C.border}`, background:"transparent", color:C.textSecondary, fontSize:11, textDecoration:"none", display:"flex", alignItems:"center", gap:5 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                PDF
+              </a>
+            )}
+          </div>
         </div>
 
-        {/* The actual chart image from backend */}
-        {shipData?.plot_url ? (
-          <img
-            src={shipData.plot_url}
-            alt="Speed vs Power Performance Chart"
-            style={{
-              width:"100%", borderRadius:10,
-              border:`1px solid ${C.borderCard}`,
-            }}
-          />
+        {/* Legend */}
+        <div style={{ display:"flex", gap:20, marginBottom:12, flexWrap:"wrap" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ width:20, height:2, background:C.accent, display:"inline-block", borderRadius:2 }}/>
+            <span style={{ fontSize:11, color:C.textSecondary }}>Clean Hull</span>
+          </div>
+          {aggregatePenalty !== null ? (
+            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ width:20, height:2, background:C.critical, display:"inline-block", borderRadius:2 }}/>
+              <span style={{ fontSize:11, color:C.textSecondary }}>Fouled Hull (avg +{aggregatePenalty}%)</span>
+            </div>
+          ) : (
+            <span style={{ fontSize:11, color:C.textMuted }}>
+              Upload hull images → enter idle days → calculate to see fouled curve
+            </span>
+          )}
+        </div>
+
+        {/* Chart */}
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={isMobile ? 240 : 320}>
+            <LineChart data={chartData} margin={{ top:10, right:10, bottom:20, left:0 }}>
+              <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3"/>
+              <XAxis dataKey="speed" tick={{ fontSize:10, fill:C.textMuted }}
+                label={{ value:"Speed (knots)", position:"insideBottom", offset:-8, fontSize:11, fill:C.textMuted }}/>
+              <YAxis tick={{ fontSize:10, fill:C.textMuted }} width={55}
+                label={{ value:"Power (kW)", angle:-90, position:"insideLeft", fontSize:11, fill:C.textMuted, offset:10 }}/>
+              <Tooltip
+                contentStyle={{ background:C.cardSolid, border:`1px solid ${C.border}`, borderRadius:8, fontSize:11 }}
+                labelFormatter={v => `${v} kn`}
+                formatter={(value, name) => [
+                  `${value.toLocaleString()} kW`,
+                  name === "brake_power" ? "Clean Hull" : `Fouled (+${aggregatePenalty}%)`
+                ]}
+              />
+              <Line type="monotone" dataKey="brake_power" stroke={C.accent} strokeWidth={2} dot={false} name="brake_power"/>
+              {showFouled && aggregatePenalty !== null && activeCurve?.fouled_power && (
+                <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power"/>
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        ) : shipData?.plot_url ? (
+          <img src={shipData.plot_url} alt="Speed vs Power"
+            style={{ width:"100%", borderRadius:10, border:`1px solid ${C.borderCard}` }}/>
         ) : (
-          // Fallback if no image yet
-          <div style={{
-            height:300, display:"flex",
-            alignItems:"center", justifyContent:"center",
-            color:C.textMuted, fontSize:13,
-            border:`1px dashed ${C.border}`, borderRadius:10,
-          }}>
+          <div style={{ height:300, display:"flex", alignItems:"center", justifyContent:"center", color:C.textMuted, fontSize:13, border:`1px dashed ${C.border}`, borderRadius:10 }}>
             No chart available
           </div>
         )}
+
+        {/* Penalty summary bar */}
+        {aggregatePenalty !== null && (
+          <div style={{ marginTop:14, padding:"10px 16px", background:"rgba(239,68,68,0.06)", border:`1px solid rgba(239,68,68,0.2)`, borderRadius:8, display:"flex", gap:24, flexWrap:"wrap", alignItems:"center" }}>
+            <div>
+              <div style={{ fontSize:9, color:C.textMuted, letterSpacing:"0.08em" }}>AVG HULL PENALTY</div>
+              <div style={{ fontSize:22, fontWeight:800, color:C.critical }}>{aggregatePenalty}%</div>
+            </div>
+            <div style={{ width:1, height:32, background:"rgba(255,255,255,0.08)" }}/>
+            <div style={{ fontSize:11, color:C.textMuted, flex:1 }}>
+              At design speed, hull fouling requires <span style={{ color:C.critical, fontWeight:700 }}>{aggregatePenalty}% more power</span>.
+              Switch to Hull Analysis to update values.
+            </div>
+          </div>
+        )}
       </div>
-
-
     </div>
   );
 }
 
 
-function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResults, setSectionResults }) {
+function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResults, setSectionResults, onFouledCurvesUpdate }) {
   const [selected, setSelected] = useState(0);
   const [selectedType, setSelectedType] = useState("vertical_sides");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [idleDays, setIdleDays] = useState("");
   // const [powerLossData, setPowerLossData] = useState({});
   const [powerLossLoading, setPowerLossLoading] = useState(false);
+  const avgList = (arr) => arr.length
+    ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 100) / 100
+    : 0;
+  const fetchFouledCurves = (updatedResults) => {
+    const allRoughness = Object.values(updatedResults)
+      .filter(r => r.roughness !== undefined)
+      .map(r => r.roughness);
 
+    if (allRoughness.length === 0) return;
+
+    // Average roughness across all uploaded sections
+    const avgRoughness = allRoughness.reduce((a, b) => a + b, 0) / allRoughness.length;
+
+    // We need idle_days and fouling_grade — use most recent section's values
+    const anySection = Object.values(updatedResults).find(r => r.idle_days !== undefined);
+    if (!anySection) return;
+
+    const fd = new FormData();
+    fd.append("imo", imo);
+    fd.append("idle_days", anySection.idle_days);
+    fd.append("fouling_grade", Math.round(
+      Object.values(updatedResults)
+        .filter(r => r.fouling_grade !== undefined)
+        .reduce((a, b, _, arr) => a + b.fouling_grade / arr.length, 0)
+    ));
+
+    fetch("https://da.azolla.sg/vessel/fouled_curves", {
+      method: "POST",
+      body: fd,
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === "success") {
+        // Average the per-speed power_loss_pct list into a single number
+        const avgPenalty = avgList(data.power_loss_pct);
+        onFouledCurvesUpdate(data.fouled_curves, avgPenalty);
+      }
+    })
+    .catch(err => console.error("Fouled curves error:", err));
+  };
 const SCORECARD_DATA = {
 
   vertical_sides: [
@@ -1540,16 +1628,20 @@ onClick={() => {
                           )
                           .then(res => res.json())
                           .then(data => {
-                            console.log("API response:", data);  // ✅ Fix: see exact API response
                             if (data.status === "success") {
-                              setSectionResults(prev => ({
-                                ...prev,
-                                [selectedType]: {
-                                  ...prev[selectedType],
-                                  power_loss_pct: data.power_loss_pct,
-                                  roughness: data.roughness,
-                                }
-                              }));
+                              const updatedResults = {
+                                  ...sectionResults,
+                                  [selectedType]: {
+                                      ...sectionResults[selectedType],
+                                      power_loss_pct: avgList(data.power_loss_pct || [data.power_loss_pct]),
+                                      roughness:      data.roughness,
+                                      idle_days:      parseInt(idleDays),   // ← store idle_days
+                                  }
+                              };
+                              setSectionResults(updatedResults);
+                      
+                              // ── Trigger fouled curves update ──────────────────────────────
+                              fetchFouledCurves(updatedResults);
                             } else {
                               // ✅ Fix: show full API response so you can see real error
                               alert("API Error: " + JSON.stringify(data));
