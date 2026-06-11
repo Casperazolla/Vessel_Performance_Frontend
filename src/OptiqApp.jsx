@@ -1240,6 +1240,21 @@ const hasAllFoulingGrades = HULL_SECTIONS.every(
   const canCalculatePowerLoss =
     getIncompleteSections().length === 0 && hasAllFoulingGrades && parseInt(idleDays, 10) > 0;
 
+  const clearSectionUpload = (sectionId) => {
+    setUploadedImages(prev => ({
+      ...prev,
+      [sectionId]: [],
+    }));
+
+    setSectionResults(prev => {
+      const next = { ...prev };
+      delete next[sectionId];
+      return next;
+    });
+
+    setSelectedImageIndex(0);
+  };
+
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       {/* Upload area */}
@@ -1398,6 +1413,36 @@ onClick={() => {
           }}/>
         </div>
       )}
+      {!first.uploading && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            clearSectionUpload(img.id);
+          }}
+          title="Delete image"
+          style={{
+            position:"absolute",
+            top:-6,
+            right:-6,
+            width:18,
+            height:18,
+            borderRadius:"50%",
+            background:C.critical,
+            border:"none",
+            color:"#fff",
+            fontSize:11,
+            fontWeight:700,
+            cursor:"pointer",
+            display:"flex",
+            alignItems:"center",
+            justifyContent:"center",
+            lineHeight:1,
+            padding:0,
+          }}
+        >
+          x
+        </button>
+      )}
     </div>
   );
 })()}
@@ -1493,6 +1538,27 @@ onClick={() => {
             display:"block",
           }}
         />
+        {!current.uploading && (
+          <button
+            onClick={() => clearSectionUpload(selectedType)}
+            title="Delete image"
+            style={{
+              position:"absolute",
+              top:10,
+              right:10,
+              padding:"5px 10px",
+              borderRadius:6,
+              background:"rgba(239,68,68,0.85)",
+              border:`1px solid rgba(239,68,68,0.5)`,
+              color:"#fff",
+              fontSize:11,
+              fontWeight:600,
+              cursor:"pointer",
+            }}
+          >
+            Delete
+          </button>
+        )}
         {/* Badge shown when annotated image is from backend */}
         {current.annotatedImage && (
           <div style={{
