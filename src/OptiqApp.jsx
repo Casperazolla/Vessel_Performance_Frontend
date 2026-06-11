@@ -583,7 +583,6 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
     sea_chest: [],
   });
   const [sectionResults, setSectionResults] = useState({});
-  const [idleDays, setIdleDays] = useState("");
 
   const [fouledCurves, setFouledCurves]         = useState(null);
   const [aggregatePenalty, setAggregatePenalty] = useState(null);
@@ -713,8 +712,6 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
     sectionResults={sectionResults}
     setSectionResults={setSectionResults}
     onFouledCurvesUpdate={handleFouledCurvesUpdate}
-    idleDays={idleDays}
-    setIdleDays={setIdleDays}
   />
 )}
           {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
@@ -897,6 +894,7 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
   const [selectedType, setSelectedType] = useState("vertical_sides");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [idleDays, setIdleDays] = useState("");
+  // const [powerLossData, setPowerLossData] = useState({});
   const [powerLossLoading, setPowerLossLoading] = useState(false);
   useEffect(() => {
     const anyIdleDays = Object.values(sectionResults).find(
@@ -923,46 +921,10 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
       return next;
     });
   };
+
   const avgList = (arr) => arr.length
     ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 100) / 100
     : 0;
-  // const fetchFouledCurves = (updatedResults) => {
-  //   const allRoughness = Object.values(updatedResults)
-  //     .filter(r => r.roughness !== undefined)
-  //     .map(r => r.roughness);
-
-  //   if (allRoughness.length === 0) return;
-
-  //   // Average roughness across all uploaded sections
-  //   const avgRoughness = allRoughness.reduce((a, b) => a + b, 0) / allRoughness.length;
-
-  //   // We need idle_days and fouling_grade — use most recent section's values
-  //   const anySection = Object.values(updatedResults).find(r => r.idle_days !== undefined);
-  //   if (!anySection) return;
-
-  //   const fd = new FormData();
-  //   fd.append("imo", imo);
-  //   fd.append("idle_days", anySection.idle_days);
-  //   fd.append("fouling_grade", Math.round(
-  //     Object.values(updatedResults)
-  //       .filter(r => r.fouling_grade !== undefined)
-  //       .reduce((a, b, _, arr) => a + b.fouling_grade / arr.length, 0)
-  //   ));
-
-  //   fetch("https://da.azolla.sg/vessel/fouled_curves", {
-  //     method: "GET",
-  //     body: fd,
-  //   })
-  //   .then(r => r.json())
-  //   .then(data => {
-  //     if (data.status === "success") {
-  //       // Average the per-speed power_loss_pct list into a single number
-  //       const avgPenalty = avgList(data.power_loss_pct);
-  //       onFouledCurvesUpdate(data.fouled_curves, avgPenalty);
-  //     }
-  //   })
-  //   .catch(err => console.error("Fouled curves error:", err));
-  // };
   // Use the worst fouling grade across all uploaded sections because idle days is a vessel-level characteristic.
   const getMaxFoulingGrade = (results) => {
     const foulingGrades = Object.values(results)
@@ -1107,7 +1069,7 @@ const SCORECARD_DATA = {
       label:"FOULING GRADE:",
       value:"4",
       color:C.warning,
-    },
+    }, 
     {
       label:"FOULING AGENTS DETECTED:",
       value:"Barnacle, Slime",
@@ -1128,10 +1090,10 @@ const handleUpload = async (section, file) => {
   const localPreview = URL.createObjectURL(file);
   const uploadId = `${Date.now()}-${Math.random()}`;
 
-  // Replace old images with new one (keep only 1 image per section)
   setUploadedImages(prev => ({
     ...prev,
     [section.id]: [
+      ...(prev[section.id] || []),
       {
         uploadId,
         imageUrl: localPreview,
@@ -1142,7 +1104,7 @@ const handleUpload = async (section, file) => {
   }));
 
   setSelectedType(section.id);
-  setSelectedImageIndex(0);
+  setSelectedImageIndex(-1);
 
   try {
     const formData = new FormData();
@@ -1162,47 +1124,18 @@ const handleUpload = async (section, file) => {
     const result = await response.json();
     
     if (result.status === "success") {
-      // Store fouling results
+      // ── Store ALL result fields including agent_patches ──
       setSectionResults(prev => ({
         ...prev,
         [section.id]: {
           fouling_grade:      result.fouling_grade,
           fouling_type:       result.fouling_type,
           fouling_percentage: result.fouling_percentage,
+          idle_days:          idleDays ? parseInt(idleDays, 10) : undefined,
           agent_patches:      result.agent_patches || {},
-          idle_days:          idleDays ? parseInt(idleDays, '') :undefined,
         }
       }));
 
-      // Calculate power loss if idleDays is set globally
-      // if (idleDays && idleDays > 0) {
-      //   try {
-      //     const powerLossRes = await fetch(
-      //       `https://da.azolla.sg/vessel/fouled_curves?imo=${imo}&idle_days=${parseInt(idleDays)}&fouling_grade=${result.fouling_grade}`
-      //     );
-      //     const powerLoss = await powerLossRes.json();
-        
-      //     if (powerLoss.status === "success") {
-      //       // Handle both array and single value responses
-      //       const powerLossValue = Array.isArray(powerLoss.power_loss_pct) 
-      //         ? avgList(powerLoss.power_loss_pct)
-      //         : powerLoss.power_loss_pct;
-            
-      //       setSectionResults(prev => ({
-      //         ...prev,
-      //         [section.id]: {
-      //           ...prev[section.id],
-      //           roughness:      powerLoss.roughness,
-      //           power_loss_pct: powerLossValue,
-      //         }
-      //       }));
-      //     }
-      //   } catch (err) {
-      //     console.error("Power loss calculation error:", err);
-      //   }
-      // }
-
-      // Update image with result from server
       setUploadedImages(prev => {
         const list = prev[section.id] || [];
         const updatedList = list.map(item =>
@@ -1221,12 +1154,13 @@ const handleUpload = async (section, file) => {
         return { ...prev, [section.id]: updatedList };
       });
 
-      setSelectedImageIndex(0);
+      setSelectedImageIndex(-1);
     } else {
-      // On error, replace with empty array (remove the uploading placeholder)
       setUploadedImages(prev => ({
         ...prev,
-        [section.id]: [],
+        [section.id]: (prev[section.id] || []).filter(
+          item => item.uploadId !== uploadId
+        ),
       }));
       console.error("Upload failed:", result);
     }
@@ -1241,46 +1175,7 @@ const handleUpload = async (section, file) => {
   }
 };
 
-// const fetchPowerLoss = async (foulingGrade) => {
-//   if (!idleDays || idleDays <= 0) {
-//     alert("Please enter valid idle days");
-//     return;
-//   }
-
-//   setPowerLossLoading(true);
-//   try {
-//     const response = await fetch(
-//       `https://da.azolla.sg/hull_analysis/power_loss?idle_days=${parseInt(idleDays)}&fouling_grade=${foulingGrade}`,
-//       {
-//         method: "GET",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     const data = await response.json();
-
-//     if (data.status === "success") {
-//       setPowerLossData(prev => ({
-//         ...prev,
-//         [selectedType]: {
-//           power_loss_pct: data.power_loss_pct,
-//           roughness: data.roughness,
-//           idle_days: data.idle_days,
-//           fouling_grade: data.fouling_grade,
-//         }
-//       }));
-//     } else {
-//       alert("Error calculating power loss: " + (data.message || "Unknown error"));
-//     }
-//   } catch (err) {
-//     console.error("Power loss calculation error:", err);
-//     alert("Failed to calculate power loss");
-//   } finally {
-//     setPowerLossLoading(false);
-//   }
-// };
+  // Legacy per-section power-loss flow was removed because calculation must now use the vessel-wide maximum fouling grade.
 
   const HULL_SECTIONS = [
   { id: "vertical_sides",  label: "Vertical Sides", s3Key: "Vertical_Side_img1",  required: true  },
@@ -1319,13 +1214,6 @@ const handleUpload = async (section, file) => {
   },
 ] : (SCORECARD_DATA[selectedType] || []);
 
-
-// const validateRequiredImages = () => {
-//   const requiredSections = HULL_SECTIONS.filter(s => s.required);
-
-//   const missing = requiredSections.filter(
-//     s => !uploadedImages[s.id]
-//   );
 const getIncompleteSections = () => HULL_SECTIONS.filter((section) => {
   const sectionImages = uploadedImages[section.id] || [];
   return sectionImages.length === 0 || sectionImages.some((image) => image.uploading);
@@ -1336,7 +1224,6 @@ const validateAllImagesUploaded = () => {
 
   if (missing.length > 0) {
     alert(
-      // `Please upload: ${missing.map(m => m.label).join(", ")}`
       `Please upload and complete processing for: ${missing.map(m => m.label).join(", ")}`
     );
     return false;
@@ -1344,6 +1231,7 @@ const validateAllImagesUploaded = () => {
 
   return true;
 };
+
 const hasAllFoulingGrades = HULL_SECTIONS.every(
   (section) => sectionResults[section.id]?.fouling_grade !== undefined
 );
@@ -1351,7 +1239,6 @@ const hasAllFoulingGrades = HULL_SECTIONS.every(
   // Keep calculation disabled until every required image is processed, all fouling grades exist, and idle days is set.
   const canCalculatePowerLoss =
     getIncompleteSections().length === 0 && hasAllFoulingGrades && parseInt(idleDays, 10) > 0;
-
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -1691,7 +1578,6 @@ onClick={() => {
                         min="0"
                         max="10000"
                         value={idleDays}
-                        {/* onChange={(e) => setIdleDays(e.target.value)} */}
                         onChange={(e) => {
                           const value = e.target.value;
                           setIdleDays(value);
