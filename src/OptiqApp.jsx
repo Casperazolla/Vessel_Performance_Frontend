@@ -776,6 +776,9 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
         fouled_power: activeCurve.fouled_power
           ? Math.round(activeCurve.fouled_power[i])
           : undefined,
+        power_loss_pct: activeCurve.power_loss_pct 
+          ? activeCurve.power_loss_pct[i]
+          : undefined,
       }))
     : [];
 
@@ -828,7 +831,7 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
           {aggregatePenalty !== null ? (
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ width:20, height:2, background:C.critical, display:"inline-block", borderRadius:2 }}/>
-              <span style={{ fontSize:11, color:C.textSecondary }}>Fouled Hull (avg +{aggregatePenalty}%)</span>
+              <span style={{ fontSize:11, color:C.textSecondary }}>Fouled Hull (power loss by speed point)</span>
             </div>
           ) : (
             <span style={{ fontSize:11, color:C.textMuted }}>
@@ -849,10 +852,19 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
               <Tooltip
                 contentStyle={{ background:C.cardSolid, border:`1px solid ${C.border}`, borderRadius:8, fontSize:11 }}
                 labelFormatter={v => `${v} kn`}
-                formatter={(value, name) => [
-                  `${value.toLocaleString()} kW`,
-                  name === "brake_power" ? "Clean Hull" : `Fouled (+${aggregatePenalty}%)`
-                ]}
+                formatter={(value, name, props) => {
+                  if (name === "brake_power") {
+                    return [`${value.toLocaleString()} kW`, "Clean Hull"];
+                  } else if (name === "fouled_power") {
+                    // Show the specific power_loss_pct for this point
+                    const pointPowerLoss = props.payload?.power_loss_pct;
+                    const label = pointPowerLoss !== undefined 
+                      ? `Fouled (+${pointPowerLoss.toFixed(2)}%)`
+                      : `Fouled (+${aggregatePenalty}%)`;
+                    return [`${value.toLocaleString()} kW`, label];
+                  }
+                  return [value, name];
+                }}
               />
               <Line type="monotone" dataKey="brake_power" stroke={C.accent} strokeWidth={2} dot={false} name="brake_power"/>
               {showFouled && aggregatePenalty !== null && activeCurve?.fouled_power && (
