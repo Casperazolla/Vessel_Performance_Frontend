@@ -996,12 +996,12 @@ const SCORECARD_DATA = {
     {
       label:"FOULING GRADE:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"FOULING AGENTS DETECTED:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
@@ -1014,13 +1014,13 @@ const SCORECARD_DATA = {
     {
       label:"FOULING GRADE:",
       value:"-",
-      color:C.critical,
+      color:C.textMuted,
     },
     {
       label:"FOULING AGENTS DETECTED:",
       value:"-",
 
-      color:C.critical,
+      color:C.textMuted,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
@@ -1033,12 +1033,12 @@ const SCORECARD_DATA = {
     {
       label:"FOULING GRADE:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"FOULING AGENTS DETECTED:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
@@ -1051,12 +1051,12 @@ const SCORECARD_DATA = {
     {
       label:"FOULING GRADE:",
       value:"-",
-      color:C.critical,
+      color:C.textMuted,
     },
     {
       label:"FOULING AGENTS DETECTED:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
@@ -1069,12 +1069,12 @@ const SCORECARD_DATA = {
     {
       label:"FOULING GRADE:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"FOULING AGENTS DETECTED:",
       value:"-",
-      color:C.critical,
+      color:C.textMuted,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
@@ -1087,13 +1087,13 @@ const SCORECARD_DATA = {
     {
       label:"FOULING GRADE:",
       value:"-",
-      color:C.warning,
+      color:C.textMuted,
     }, 
     {
       label:"FOULING AGENTS DETECTED:",
       value:"-",
 
-      color:C.warning,
+      color:C.textMuted,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
