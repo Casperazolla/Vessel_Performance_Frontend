@@ -906,17 +906,23 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
   const [selectedType, setSelectedType] = useState("vertical_sides");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [idleDays, setIdleDays] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
   // const [powerLossData, setPowerLossData] = useState({});
   const [powerLossLoading, setPowerLossLoading] = useState(false);
+  
   useEffect(() => {
-    const anyIdleDays = Object.values(sectionResults).find(
-      (r) => r?.idle_days !== undefined && r?.idle_days !== null
-    )?.idle_days;
+    // Only auto-populate idle days on first mount if there's data
+    if (!isInitialized) {
+      const anyIdleDays = Object.values(sectionResults).find(
+        (r) => r?.idle_days !== undefined && r?.idle_days !== null
+      )?.idle_days;
 
-    if (anyIdleDays !== undefined && anyIdleDays !== null && idleDays === "") {
-      setIdleDays(String(anyIdleDays));
+      if (anyIdleDays !== undefined && anyIdleDays !== null) {
+        setIdleDays(String(anyIdleDays));
+      }
+      setIsInitialized(true);
     }
-  }, [sectionResults, idleDays]);
+  }, []);
 
   const applyIdleDaysToAllSections = (days) => {
     setSectionResults((prev) => {
@@ -989,108 +995,110 @@ const SCORECARD_DATA = {
   vertical_sides: [
     {
       label:"FOULING GRADE:",
-      value:"3",
+      value:"-",
       color:C.warning,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Slime",
+      value:"-",
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"10%",
-      color:C.warning,
+      value:"Enter idle days →",
+      color:C.textMuted,
     },
   ],
 
   propeller: [
     {
       label:"FOULING GRADE:",
-      value:"5",
+      value:"-",
       color:C.critical,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Barnacles, Calcareous",
+      value:"-",
+
       color:C.critical,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"25%",
-      color:C.critical,
+      value:"Enter idle days →",
+      color:C.textMuted,
     },
   ],
 
   rudder: [
     {
       label:"FOULING GRADE:",
-      value:"2",
+      value:"-",
       color:C.warning,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Slime",
+      value:"-",
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"7%",
-      color:C.success,
+      value:"Enter idle days →",
+      color:C.textMuted,
     },
   ],
 
   flat_bottom: [
     {
       label:"FOULING GRADE:",
-      value:"6",
+      value:"-",
       color:C.critical,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Barnacles, Tubeworm",
+      value:"-",
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"35%",
-      color:C.warning,
+      value:"Enter idle days →",
+      color:C.textMuted,
     },
   ],
 
   bilge_keels: [
     {
       label:"FOULING GRADE:",
-      value:"4",
+      value:"-",
       color:C.warning,
     },
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Slime, Barnacles, Algae",
+      value:"-",
       color:C.critical,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"20%",
-      color:C.critical,
+      value:"Enter idle days →",
+      color:C.textMuted,
     },
   ],
 
   sea_chest: [
     {
       label:"FOULING GRADE:",
-      value:"4",
+      value:"-",
       color:C.warning,
     }, 
     {
       label:"FOULING AGENTS DETECTED:",
-      value:"Barnacle, Slime",
+      value:"-",
+
       color:C.warning,
     },
     {
       label:"IMPACT ON POWER CONSUMPTION:",
-      value:"18%",
-      color:C.warning,
+      value:"Enter idle days →",
+      color:C.textMuted,
     },
   ],
 
@@ -1105,7 +1113,6 @@ const handleUpload = async (section, file) => {
   setUploadedImages(prev => ({
     ...prev,
     [section.id]: [
-      ...(prev[section.id] || []),
       {
         uploadId,
         imageUrl: localPreview,
