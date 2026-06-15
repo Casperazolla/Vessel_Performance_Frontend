@@ -595,7 +595,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
   const navItems = [
     { id:"dashboard",  label:"Dashboard",        icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { id:"hull",       label:"Hull Analysis",    icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 20h18"/></svg> },
-    { id:"weather",    label:"Weather Impact",   icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg> },
+    // { id:"weather",    label:"Weather Impact",   icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg> },
     { id:"esd",        label:"ESD Simulator",    icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2"/></svg> },
     { id:"reports",    label:"Reports",          icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
   ];
@@ -714,7 +714,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
     onFouledCurvesUpdate={handleFouledCurvesUpdate}
   />
 )}
-          {activeTab === "weather"   && <WeatherTab   isMobile={isMobile} />}
+          
           {activeTab === "esd"       && <ESDTab       isMobile={isMobile} />}
 {activeTab === "reports" && <ReportsTab isMobile={isMobile} imo={imo} shipData={shipData} />}
         </div>
@@ -1803,85 +1803,85 @@ onClick={() => {
 }
 
 
-function WeatherTab({ isMobile, onEnter }) {
-  const [condition, setCondition] = useState("moderate");
-  const [route, setRoute] = useState("");
-  const [analyzed, setAnalyzed] = useState(false);
-  const [loading, setLoading] = useState(false);
+// function WeatherTab({ isMobile, onEnter }) {
+//   const [condition, setCondition] = useState("moderate");
+//   const [route, setRoute] = useState("");
+//   const [analyzed, setAnalyzed] = useState(false);
+//   const [loading, setLoading] = useState(false);
 
-  const weatherData = speedPowerData.map(d => ({
-    ...d,
-    withWeather: Math.round(d.actual * 1.18),
-  }));
+//   const weatherData = speedPowerData.map(d => ({
+//     ...d,
+//     withWeather: Math.round(d.actual * 1.18),
+//   }));
 
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+//   return (
+//     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
-      {/* Input card */}
-      <div style={{ background:C.cardSolid, border:`1px solid ${C.borderCard}`, borderRadius:12, padding:"18px" }}>
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr auto", gap:12, alignItems:"end" }}>
-          <div>
-            <label style={{ display:"block", fontSize:11, color:C.textMuted, marginBottom:6, letterSpacing:"0.06em", textTransform:"uppercase" }}>Weather Condition</label>
-            <select value={condition} onChange={e=>setCondition(e.target.value)}
-              style={{ width:"100%", padding:"10px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg, color:C.textPrimary, fontSize:13, cursor:"pointer" }}>
-              <option value="calm">Calm</option>
-              <option value="light">Light breeze</option>
-              <option value="moderate">Moderate</option>
-              <option value="strong">Strong wind</option>
-              <option value="storm">Storm</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display:"block", fontSize:11, color:C.textMuted, marginBottom:6, letterSpacing:"0.06em", textTransform:"uppercase" }}>Route / Region</label>
-            <input value={route} onChange={e=>setRoute(e.target.value)} placeholder="e.g. North Atlantic"
-              style={{ width:"100%", padding:"10px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg, color:C.textPrimary, fontSize:13 }}/>
-          </div>
-          <button>
-            Analyze Impact
-          </button>
-        </div>
-      </div>
+//       {/* Input card */}
+//       <div style={{ background:C.cardSolid, border:`1px solid ${C.borderCard}`, borderRadius:12, padding:"18px" }}>
+//         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr auto", gap:12, alignItems:"end" }}>
+//           <div>
+//             <label style={{ display:"block", fontSize:11, color:C.textMuted, marginBottom:6, letterSpacing:"0.06em", textTransform:"uppercase" }}>Weather Condition</label>
+//             <select value={condition} onChange={e=>setCondition(e.target.value)}
+//               style={{ width:"100%", padding:"10px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg, color:C.textPrimary, fontSize:13, cursor:"pointer" }}>
+//               <option value="calm">Calm</option>
+//               <option value="light">Light breeze</option>
+//               <option value="moderate">Moderate</option>
+//               <option value="strong">Strong wind</option>
+//               <option value="storm">Storm</option>
+//             </select>
+//           </div>
+//           <div>
+//             <label style={{ display:"block", fontSize:11, color:C.textMuted, marginBottom:6, letterSpacing:"0.06em", textTransform:"uppercase" }}>Route / Region</label>
+//             <input value={route} onChange={e=>setRoute(e.target.value)} placeholder="e.g. North Atlantic"
+//               style={{ width:"100%", padding:"10px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg, color:C.textPrimary, fontSize:13 }}/>
+//           </div>
+//           <button>
+//             Analyze Impact
+//           </button>
+//         </div>
+//       </div>
 
-      {/* Weather chart */}
-      <ChartCard title="Weather Impact on Power Requirement"
-        controls={
-          <div style={{ display:"flex", gap:16 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:6 }}><Dot color={C.accent}/><span style={{ fontSize:11,color:C.textSecondary }}>Calm water</span></div>
-            <div style={{ display:"flex", alignItems:"center", gap:6 }}><Dot color={C.warning}/><span style={{ fontSize:11,color:C.textSecondary }}>With weather</span></div>
-          </div>
-        }
-      >
-        <ResponsiveContainer width="100%" height={isMobile ? 200 : 280}>
-          <LineChart data={weatherData} margin={{top:10,right:10,bottom:20,left:0}}>
-            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3"/>
-            <XAxis dataKey="speed" tick={{fontSize:10,fill:C.textMuted}} label={{value:"Speed (Knots)",position:"insideBottom",offset:-8,fontSize:11,fill:C.textMuted}}/>
-            <YAxis tick={{fontSize:10,fill:C.textMuted}} width={40}/>
-            <Tooltip contentStyle={{background:C.cardSolid,border:`1px solid ${C.border}`,borderRadius:8,fontSize:11}} labelFormatter={v=>`${v} kn`}/>
-            <Line type="monotone" dataKey="actual" stroke={C.accent} strokeWidth={2} dot={false}/>
-            <Line type="monotone" dataKey="withWeather" stroke={C.warning} strokeWidth={2} dot={false} strokeDasharray="6 3"/>
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
+//       {/* Weather chart */}
+//       <ChartCard title="Weather Impact on Power Requirement"
+//         controls={
+//           <div style={{ display:"flex", gap:16 }}>
+//             <div style={{ display:"flex", alignItems:"center", gap:6 }}><Dot color={C.accent}/><span style={{ fontSize:11,color:C.textSecondary }}>Calm water</span></div>
+//             <div style={{ display:"flex", alignItems:"center", gap:6 }}><Dot color={C.warning}/><span style={{ fontSize:11,color:C.textSecondary }}>With weather</span></div>
+//           </div>
+//         }
+//       >
+//         <ResponsiveContainer width="100%" height={isMobile ? 200 : 280}>
+//           <LineChart data={weatherData} margin={{top:10,right:10,bottom:20,left:0}}>
+//             <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3"/>
+//             <XAxis dataKey="speed" tick={{fontSize:10,fill:C.textMuted}} label={{value:"Speed (Knots)",position:"insideBottom",offset:-8,fontSize:11,fill:C.textMuted}}/>
+//             <YAxis tick={{fontSize:10,fill:C.textMuted}} width={40}/>
+//             <Tooltip contentStyle={{background:C.cardSolid,border:`1px solid ${C.border}`,borderRadius:8,fontSize:11}} labelFormatter={v=>`${v} kn`}/>
+//             <Line type="monotone" dataKey="actual" stroke={C.accent} strokeWidth={2} dot={false}/>
+//             <Line type="monotone" dataKey="withWeather" stroke={C.warning} strokeWidth={2} dot={false} strokeDasharray="6 3"/>
+//           </LineChart>
+//         </ResponsiveContainer>
+//       </ChartCard>
 
-      {/* Weather stats */}
-      {analyzed && (
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:12, animation:"slideUp 0.4s both" }}>
-          {[
-            { label:"Speed Loss", value:"−1.4 kn", color:C.warning },
-            { label:"Added Resistance", value:"+18%", color:C.critical },
-            { label:"Extra Fuel/Day", value:"+0.8 MT", color:C.warning },
-            { label:"Route Penalty", value:"+$4.2k", color:C.critical },
-          ].map((s,i) => (
-            <div key={i} style={{ background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:10, padding:"14px 16px" }}>
-              <div style={{ fontSize:10, color:C.textMuted, marginBottom:6 }}>{s.label}</div>
-              <div style={{ fontSize:20, fontWeight:700, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+//       {/* Weather stats */}
+//       {analyzed && (
+//         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:12, animation:"slideUp 0.4s both" }}>
+//           {[
+//             { label:"Speed Loss", value:"−1.4 kn", color:C.warning },
+//             { label:"Added Resistance", value:"+18%", color:C.critical },
+//             { label:"Extra Fuel/Day", value:"+0.8 MT", color:C.warning },
+//             { label:"Route Penalty", value:"+$4.2k", color:C.critical },
+//           ].map((s,i) => (
+//             <div key={i} style={{ background:C.statBg, border:`1px solid ${C.borderCard}`, borderRadius:10, padding:"14px 16px" }}>
+//               <div style={{ fontSize:10, color:C.textMuted, marginBottom:6 }}>{s.label}</div>
+//               <div style={{ fontSize:20, fontWeight:700, color:s.color, fontFamily:"'Aeonik',sans-serif" }}>{s.value}</div>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 
 
 function ESDTab({ isMobile }) {
