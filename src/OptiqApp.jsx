@@ -586,11 +586,73 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
 
   const [fouledCurves, setFouledCurves]         = useState(null);
   const [aggregatePenalty, setAggregatePenalty] = useState(null);
+  const [areaT, setAreaT] = useState("");
+  const [marineData, setMarineData] = useState(null);
+const [addedResistanceData, setAddedResistanceData] = useState(null);
+  const [course, setCourse] = useState("");
+const [showWeather, setShowWeather] = useState(true);
+
+const [latitude, setLatitude] = useState("");
+const [longitude, setLongitude] = useState("");
+
+const [weatherPenalty, setWeatherPenalty] = useState(0);
+const [windSpeed, setWindSpeed] = useState("");
+const [windDirection, setWindDirection] = useState("");
+
+const fetchMarineData = async () => {
+  try {
+    const response = await fetch(
+      `https://be.azolla.sg/v2/vessel/latest_marine_data/?imo_number=${imo}`
+    );
+
+    const data = await response.json();
+
+    setMarineData(data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+useEffect(() => {
+  if (imo) {
+    fetchMarineData();
+  }
+}, [imo]);
 
   const handleFouledCurvesUpdate = (curves, penalty) => {
     setFouledCurves(curves);
     setAggregatePenalty(penalty);
   };
+
+  const fetchAddedResistance = async () => {
+  try {
+    if (!marineData) {
+      alert("Marine data not loaded");
+      return;
+    }
+
+    if (!areaT) {
+      alert("Please enter Area_T");
+      return;
+    }
+
+    const response = await fetch(
+      `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&ship_course_deg=${marineData.cog}&area_t=${areaT}`
+    );
+
+    const data = await response.json();
+
+    console.log("Added Resistance Response", data);
+
+    if (data.status === "success") {
+      setAddedResistanceData(data.added_power_data
+
+      );
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
   
   const navItems = [
     { id:"dashboard",  label:"Dashboard",        icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
@@ -702,7 +764,17 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
         {/* Tab content */}
         <div style={{ flex:1, overflow:"auto", padding: isMobile ? "16px 12px" : "24px 28px" }}>
 
-{activeTab === "dashboard" && <DashboardTab isMobile={isMobile} shipData={shipData} fouledCurves={fouledCurves} aggregatePenalty={aggregatePenalty} />}
+{activeTab === "dashboard" && <DashboardTab
+  isMobile={isMobile}
+  shipData={shipData}
+  fouledCurves={fouledCurves}
+  aggregatePenalty={aggregatePenalty}
+  areaT={areaT}
+  setAreaT={setAreaT}
+  marineData={marineData}
+  fetchAddedResistance={fetchAddedResistance}
+  addedResistanceData={addedResistanceData}
+/>}
 {activeTab === "hull" && (
   <HullTab
     isMobile={isMobile}
@@ -760,7 +832,24 @@ function Toggle({ label, value, onChange }) {
 const Dot = ({color}) => <span style={{ width:10, height:2, background:color, display:"inline-block", borderRadius:2, marginRight:6 }}/>;
 
 
-function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
+function DashboardTab({
+  isMobile,
+  shipData,
+  fouledCurves,
+  aggregatePenalty,
+  areaT,
+  setAreaT,
+  course,
+  setCourse,
+  latitude,
+  longitude,
+  showWeather,
+  setShowWeather,
+  weatherPenalty,
+  marineData,
+fetchAddedResistance,
+addedResistanceData
+}) {
   const [showFouled, setShowFouled]           = useState(true);
   const [selectedDraught, setSelectedDraught] = useState(null);
 
@@ -768,19 +857,41 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
   const draughtKeys = Object.keys(curves);
   const activeKey   = selectedDraught || draughtKeys[draughtKeys.length - 1];
   const activeCurve = curves[activeKey];
+  const addedCurve =
+  addedResistanceData?.[activeKey];
 
-  const chartData = activeCurve
-    ? activeCurve.speed.map((s, i) => ({
-        speed:        Math.round(s * 10) / 10,
-        brake_power:  Math.round(activeCurve.brake_power[i]),
-        fouled_power: activeCurve.fouled_power
+const chartData = activeCurve
+  ? activeCurve.speed.map((s, i) => {
+
+      const brakePower =
+        Math.round(activeCurve.brake_power[i]);
+
+      const fouledPower =
+        activeCurve.fouled_power
           ? Math.round(activeCurve.fouled_power[i])
-          : undefined,
-        power_loss_pct: activeCurve.power_loss_pct 
-          ? activeCurve.power_loss_pct[i]
-          : undefined,
-      }))
-    : [];
+          : null;
+
+      const addedPower =
+        addedCurve?.added_power_kW?.[i] || 0;
+
+      const weatherPower =
+        fouledPower !== null
+          ? fouledPower + addedPower
+          : brakePower + addedPower;
+
+      return {
+        speed: Math.round(s * 10) / 10,
+
+        brake_power: brakePower,
+
+        fouled_power: fouledPower,
+
+        weather_power: Math.round(weatherPower),
+
+        added_power: Math.round(addedPower),
+      };
+    })
+  : [];
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
@@ -822,6 +933,134 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
           </div>
         </div>
 
+        
+
+<div
+  style={{
+    marginBottom:16,
+    padding:16,
+    background:C.statBg,
+    border:`1px solid ${C.borderCard}`,
+    borderRadius:12,
+  }}
+>
+  <div
+    style={{
+      display:"grid",
+      gridTemplateColumns:"1.2fr 1fr 1fr 1fr auto",
+      gap:12,
+      alignItems:"end",
+    }}
+  >
+
+    <div>
+      <label
+        style={{
+          display:"block",
+          marginBottom:6,
+          fontSize:11,
+          color:C.accent,
+        }}
+      >
+        Transverse area A_T (m²)
+      </label>
+
+      <input
+  type="number"
+  value={areaT}
+  onChange={(e) => setAreaT(e.target.value)}
+  placeholder="Enter Area_T"
+/>
+    </div>
+
+    <div>
+      <label
+        style={{
+          display:"block",
+          marginBottom:6,
+          fontSize:11,
+          color:C.textMuted,
+        }}
+      >
+        Latitude
+      </label>
+
+      <input
+        readOnly
+        value={marineData?.lat || ""}
+        style={{
+          width:"100%",
+          padding:"10px",
+          borderRadius:8,
+          background:C.inputBg,
+          border:`1px solid ${C.border}`,
+          color:C.textSecondary,
+        }}
+      />
+    </div>
+
+    <div>
+      <label
+        style={{
+          display:"block",
+          marginBottom:6,
+          fontSize:11,
+          color:C.textMuted,
+        }}
+      >
+        Longitude
+      </label>
+
+      <input
+        readOnly
+        value={marineData?.lng || ""}
+        style={{
+          width:"100%",
+          padding:"10px",
+          borderRadius:8,
+          background:C.inputBg,
+          border:`1px solid ${C.border}`,
+          color:C.textSecondary,
+        }}
+      />
+    </div>
+
+    <div>
+      <label
+        style={{
+          display:"block",
+          marginBottom:6,
+          fontSize:11,
+          color:C.textMuted,
+        }}
+      >
+        Course °
+      </label>
+
+      <input
+        readOnly
+        value={marineData?.cog || ""}
+        style={{
+          width:"100%",
+          padding:"10px",
+          borderRadius:8,
+          background:C.inputBg,
+          border:`1px solid ${C.border}`,
+          color:C.textSecondary,
+        }}
+      />
+    </div>
+
+ <button
+  onClick={fetchAddedResistance}
+  disabled={!areaT || !marineData}
+>
+  Apply Weather
+</button>
+
+  </div>
+</div>
+
         {/* Legend */}
         <div style={{ display:"flex", gap:20, marginBottom:12, flexWrap:"wrap" }}>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -838,6 +1077,22 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
               Upload hull images → enter idle days → calculate to see fouled curve
             </span>
           )}
+
+          {addedResistanceData && (
+  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+    <span
+      style={{
+        width:20,
+        height:2,
+        background:"#fbbf24",
+        display:"inline-block",
+      }}
+    />
+    <span style={{ fontSize:11, color:C.textSecondary }}>
+      Weather Impact
+    </span>
+  </div>
+)}
         </div>
 
         {/* Chart */}
@@ -847,7 +1102,10 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
               <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3"/>
               <XAxis dataKey="speed" tick={{ fontSize:10, fill:C.textMuted }}
                 label={{ value:"Speed (knots)", position:"insideBottom", offset:-8, fontSize:11, fill:C.textMuted }}/>
-              <YAxis tick={{ fontSize:10, fill:C.textMuted }} width={55}
+             <YAxis
+  tick={{ fontSize:10, fill:C.textMuted }}
+  width={55}
+  domain={[0, 'dataMax + 500']}
                 label={{ value:"Power (kW)", angle:-90, position:"insideLeft", fontSize:11, fill:C.textMuted, offset:10 }}/>
               <Tooltip
                 contentStyle={{ background:C.cardSolid, border:`1px solid ${C.border}`, borderRadius:8, fontSize:11 }}
@@ -870,6 +1128,14 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
               {showFouled && aggregatePenalty !== null && activeCurve?.fouled_power && (
                 <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power"/>
               )}
+              <Line
+  type="monotone"
+  dataKey="weather_power"
+  stroke="#fbbf24"
+  strokeWidth={3}
+  dot={false}
+  name="weather_power"
+/>
             </LineChart>
           </ResponsiveContainer>
         ) : shipData?.plot_url ? (
@@ -881,6 +1147,7 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
           </div>
         )}
 
+       
         {/* Penalty summary bar */}
         {aggregatePenalty !== null && (
           <div style={{ marginTop:14, padding:"10px 16px", background:"rgba(239,68,68,0.06)", border:`1px solid rgba(239,68,68,0.2)`, borderRadius:8, display:"flex", gap:24, flexWrap:"wrap", alignItems:"center" }}>
@@ -890,7 +1157,7 @@ function DashboardTab({ isMobile, shipData, fouledCurves, aggregatePenalty }) {
             </div>
             <div style={{ width:1, height:32, background:"rgba(255,255,255,0.08)" }}/>
             <div style={{ fontSize:11, color:C.textMuted, flex:1 }}>
-              At design speed, hull fouling requires <span style={{ color:C.critical, fontWeight:700 }}>{aggregatePenalty}% more power</span>.
+              Hull fouling will lead to <span style={{ color:C.critical, fontWeight:700 }}>{aggregatePenalty}% more power consumption on an average</span>.
               Switch to Hull Analysis to update values.
             </div>
           </div>
@@ -1859,6 +2126,7 @@ function WeatherTab({ isMobile, onEnter }) {
             <Tooltip contentStyle={{background:C.cardSolid,border:`1px solid ${C.border}`,borderRadius:8,fontSize:11}} labelFormatter={v=>`${v} kn`}/>
             <Line type="monotone" dataKey="actual" stroke={C.accent} strokeWidth={2} dot={false}/>
             <Line type="monotone" dataKey="withWeather" stroke={C.warning} strokeWidth={2} dot={false} strokeDasharray="6 3"/>
+          
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
