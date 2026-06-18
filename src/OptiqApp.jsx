@@ -598,6 +598,7 @@ const [longitude, setLongitude] = useState("");
 const [weatherPenalty, setWeatherPenalty] = useState(0);
 const [windSpeed, setWindSpeed] = useState("");
 const [windDirection, setWindDirection] = useState("");
+const [weatherApplied, setWeatherApplied] = useState(false);
 
 const fetchMarineData = async () => {
   try {
@@ -648,6 +649,8 @@ useEffect(() => {
       setAddedResistanceData(data.added_power_data
 
       );
+      setWeatherApplied(true);
+
     }
   } catch (err) {
     console.error(err);
@@ -774,6 +777,8 @@ useEffect(() => {
   marineData={marineData}
   fetchAddedResistance={fetchAddedResistance}
   addedResistanceData={addedResistanceData}
+    weatherApplied={weatherApplied}
+
 />}
 {activeTab === "hull" && (
   <HullTab
@@ -848,7 +853,9 @@ function DashboardTab({
   weatherPenalty,
   marineData,
 fetchAddedResistance,
-addedResistanceData
+addedResistanceData,
+  weatherApplied,
+
 }) {
   const [showFouled, setShowFouled]           = useState(true);
   const [selectedDraught, setSelectedDraught] = useState(null);
@@ -1128,14 +1135,16 @@ const chartData = activeCurve
               {showFouled && aggregatePenalty !== null && activeCurve?.fouled_power && (
                 <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power"/>
               )}
-              <Line
-  type="monotone"
-  dataKey="weather_power"
-  stroke="#fbbf24"
-  strokeWidth={3}
-  dot={false}
-  name="weather_power"
-/>
+             {weatherApplied && (
+  <Line
+    type="monotone"
+    dataKey="weather_power"
+    stroke="#fbbf24"
+    strokeWidth={3}
+    dot={false}
+    name="weather_power"
+  />
+)}
             </LineChart>
           </ResponsiveContainer>
         ) : shipData?.plot_url ? (
