@@ -871,36 +871,28 @@ function DashboardTab({
   const addedCurve =
   addedResistanceData?.[activeKey];
 
+const hasWeather = weatherApplied && !!addedCurve?.added_power_kW;
+
 const chartData = activeCurve
   ? activeCurve.speed.map((s, i) => {
+      const brakePower = Math.round(activeCurve.brake_power[i]);
+      const fouledPower = activeCurve.fouled_power
+        ? Math.round(activeCurve.fouled_power[i])
+        : null;
 
-      const brakePower =
-        Math.round(activeCurve.brake_power[i]);
-
-      const fouledPower =
-        activeCurve.fouled_power
-          ? Math.round(activeCurve.fouled_power[i])
-          : null;
-
-      const addedPower =
-        addedCurve?.added_power_kW?.[i] || 0;
-
-      const weatherPower =
-        fouledPower !== null
-          ? fouledPower + addedPower
-          : brakePower + addedPower;
-
-      return {
+      const row = {
         speed: Math.round(s * 10) / 10,
-
         brake_power: brakePower,
-
         fouled_power: fouledPower,
-
-        weather_power: Math.round(weatherPower),
-
-        added_power: Math.round(addedPower),
       };
+
+      if (hasWeather) {
+        const addedPower = addedCurve.added_power_kW[i] || 0;
+        const base = fouledPower !== null ? fouledPower : brakePower;
+        row.weather_power = Math.round(base + addedPower);
+      }
+
+      return row;
     })
   : [];
 
