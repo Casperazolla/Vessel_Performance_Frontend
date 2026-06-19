@@ -777,7 +777,9 @@ useEffect(() => {
   marineData={marineData}
   fetchAddedResistance={fetchAddedResistance}
   addedResistanceData={addedResistanceData}
-    weatherApplied={weatherApplied}
+  weatherApplied={weatherApplied}
+  setWeatherApplied={setWeatherApplied}     
+  setAddedResistanceData={setAddedResistanceData}
 
 />}
 {activeTab === "hull" && (
@@ -852,9 +854,11 @@ function DashboardTab({
   setShowWeather,
   weatherPenalty,
   marineData,
-fetchAddedResistance,
-addedResistanceData,
+  fetchAddedResistance,
+  addedResistanceData,
   weatherApplied,
+  setWeatherApplied, 
+  setAddedResistanceData,
 
 }) {
   const [showFouled, setShowFouled]           = useState(true);
@@ -973,11 +977,19 @@ const chartData = activeCurve
       </label>
 
       <input
-  type="number"
-  value={areaT}
-  onChange={(e) => setAreaT(e.target.value)}
-  placeholder="Enter Area_T"
-/>
+        type="number"
+          value={areaT}
+          onChange={(e) => {
+            setAreaT(e.target.value);
+            setWeatherApplied(false);        // hide line until re-applied
+            setAddedResistanceData(null);
+          }}
+          placeholder="Enter Area_T"
+          style={{
+            width:"100%", padding:"10px", borderRadius:8,
+            background:C.inputBg, border:`1px solid ${C.accent}`, color:C.textPrimary,
+          }}
+      />
     </div>
 
     <div>
@@ -1085,21 +1097,12 @@ const chartData = activeCurve
             </span>
           )}
 
-          {addedResistanceData && (
-  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-    <span
-      style={{
-        width:20,
-        height:2,
-        background:"#fbbf24",
-        display:"inline-block",
-      }}
-    />
-    <span style={{ fontSize:11, color:C.textSecondary }}>
-      Weather Impact
-    </span>
-  </div>
-)}
+          {weatherApplied && addedCurve?.added_power_kW && (
+            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ width:20, height:2, background:"#fbbf24", display:"inline-block" }}/>
+              <span style={{ fontSize:11, color:C.textSecondary }}>Weather Impact</span>
+            </div>
+          )}
         </div>
 
         {/* Chart */}
@@ -1135,16 +1138,16 @@ const chartData = activeCurve
               {showFouled && aggregatePenalty !== null && activeCurve?.fouled_power && (
                 <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power"/>
               )}
-             {weatherApplied && (
-  <Line
-    type="monotone"
-    dataKey="weather_power"
-    stroke="#fbbf24"
-    strokeWidth={3}
-    dot={false}
-    name="weather_power"
-  />
-)}
+             {weatherApplied && addedCurve?.added_power_kW &&(
+                <Line
+                  type="monotone"
+                  dataKey="weather_power"
+                  stroke="#fbbf24"
+                  strokeWidth={3}
+                  dot={false}
+                  name="weather_power"
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         ) : shipData?.plot_url ? (
