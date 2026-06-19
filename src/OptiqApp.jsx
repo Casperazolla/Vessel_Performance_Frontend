@@ -638,7 +638,7 @@ useEffect(() => {
     }
 
     const response = await fetch(
-      `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&ship_course_deg=${marineData.cog}&area_t=${areaT}`
+      `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&ship_course_deg=${marineData.hdg}&area_t=${areaT}`
     );
 
     const data = await response.json();
@@ -1050,7 +1050,7 @@ const chartData = activeCurve
 
       <input
         readOnly
-        value={marineData?.cog || ""}
+        value={marineData?.hdg || ""}
         style={{
           width:"100%",
           padding:"10px",
