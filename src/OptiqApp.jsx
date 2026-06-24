@@ -568,6 +568,38 @@ function LandingPage({ onEnter, onLogout }) {
   );
 }
 
+// idle days -> fouling band. Returns whether the user must pick an intensity,
+// the available intensity options (each carrying its backend grade), or a fixed
+// auto-assigned grade. Boundary rule: each cutoff is inclusive of its upper value.
+function getFoulingConfig(idleDaysRaw) {
+  const d = parseInt(idleDaysRaw, 10);
+
+  if (Number.isNaN(d) || d <= 0)
+    return { valid: false, needsIntensity: false, options: [], grade: null, note: "Enter idle days first" };
+  if (d > 365)
+    return { valid: false, needsIntensity: false, options: [], grade: null, note: "Idle days must be ≤ 365" };
+
+  if (d <= 40)
+    return { valid: true, needsIntensity: true, grade: null,
+             options: [{ label: "High", grade: 2 }, { label: "Low", grade: 1 }],
+             note: "Select fouling intensity (High → grade 2, Low → grade 1)" };
+
+  if (d <= 49)
+    return { valid: true, needsIntensity: false, options: [], grade: 2, note: "Fouling grade auto-assigned: 2" };
+
+  if (d <= 88)
+    return { valid: true, needsIntensity: false, options: [], grade: 3, note: "Fouling grade auto-assigned: 3" };
+
+  if (d <= 120)
+    return { valid: true, needsIntensity: true, grade: null,
+             options: [{ label: "High Calcareous", grade: 4 }, { label: "Low Calcareous", grade: 3 }],
+             note: "Select fouling intensity (High Calcareous → grade 4, Low Calcareous → grade 3)" };
+
+  if (d <= 166)
+    return { valid: true, needsIntensity: false, options: [], grade: 5, note: "Fouling grade auto-assigned: 5" };
+
+  return { valid: true, needsIntensity: false, options: [], grade: 6, note: "Fouling grade auto-assigned: 6" };
+}
 
 function Dashboard({ imo, onBack, shipData, onLogout }) {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -609,7 +641,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
   const [windSpeed, setWindSpeed] = useState("");
   const [windDirection, setWindDirection] = useState("");
   const [weatherApplied, setWeatherApplied] = useState(false);
-
+  
   const fetchMarineData = async () => {
     try {
       const response = await fetch(
@@ -946,6 +978,25 @@ function DashboardTab({
   const [showFouled, setShowFouled] = useState(true);
   const [selectedDraught, setSelectedDraught] = useState(null);
 
+  const [intensity, setIntensity] = useState("");
+  const foulingCfg = getFoulingConfig(customIdleDays);
+
+  // keep customGrade (what the backend receives) in sync with the band/intensity
+  useEffect(() => {
+    if (!foulingCfg.valid) { setCustomGrade(""); return; }
+    if (foulingCfg.needsIntensity) {
+      const opt = foulingCfg.options.find(o => o.label === intensity);
+      setCustomGrade(opt ? String(opt.grade) : "");
+    } else {
+      setCustomGrade(String(foulingCfg.grade));
+    }
+  }, [customIdleDays, intensity]);   // eslint-disable-line
+
+  const fcInput = {
+    padding: "10px", borderRadius: 8,
+    background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary,
+  };
+  
   const curves =
     foulingMode === "custom"
       ? (customFouledCurves || shipData?.draught_curves || {})
@@ -1029,105 +1080,76 @@ function DashboardTab({
 
         <div
           style={{
-            marginBottom: 16,
-            padding: 16,
-            background: C.statBg,
-            border: `1px solid ${C.borderCard}`,
-            borderRadius: 12,
+            marginBottom: 16, padding: 16,
+            background: C.statBg, border: `1px solid ${C.borderCard}`, borderRadius: 12,
           }}
         >
-          <label
-            style={{
-              display: "block",
-              marginBottom: 8,
-              fontSize: 11,
-              color: C.accent,
-            }}
-          >
+          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: C.accent }}>
             Fouling Curve
           </label>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr 1fr",
-              gap: 12,
-              alignItems: "center",
-            }}
-          >
+        
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, alignItems: "center" }}>
             <select
               value={foulingMode}
               onChange={(e) => {
                 const value = e.target.value;
-
                 setFoulingMode(value);
-
-                if (value === "image") {
-                  setActiveTab("hull");
-                }
+                if (value === "image") setActiveTab("hull");
               }}
-              style={{
-                padding: "10px",
-                borderRadius: 8,
-                background: C.inputBg,
-                border: `1px solid ${C.border}`,
-                color: C.textPrimary,
-              }}
+              style={fcInput}
             >
-              <option value="image">
-                Image Based
-              </option>
-
-              <option value="custom">
-                Custom
-              </option>
+              <option value="image">Image Based</option>
+              <option value="custom">Custom</option>
             </select>
-
+        
             {foulingMode === "custom" && (
               <>
+                {/* Idle Days — comes first now */}
                 <input
-                  type="number"
-                  min="0"
-                  max="6"
-                  placeholder="Fouling Grade"
-                  value={customGrade}
-                  onChange={(e) => setCustomGrade(e.target.value)}
-                  style={{
-                    padding: "10px",
-                    borderRadius: 8,
-                    background: C.inputBg,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
-                  }}
-                />
-
-                <input
-                  type="number"
+                  type="number" min="1" max="365"
                   placeholder="Idle Days"
                   value={customIdleDays}
-                  onChange={(e) => setCustomIdleDays(e.target.value)}
-                  style={{
-                    padding: "10px",
-                    borderRadius: 8,
-                    background: C.inputBg,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
-                  }}
+                  onChange={(e) => { setCustomIdleDays(e.target.value); setIntensity(""); }}
+                  style={fcInput}
                 />
-
-                <button style={{ padding: "10px 12px", borderRadius: 8, background: C.accent, border: `1px solid ${C.border}`, color: "#fff", fontSize: 11, cursor: "pointer" }}
+        
+                {/* Fouling Intensity — selectable only in the ≤40 and 88–120 bands */}
+                {foulingCfg.needsIntensity ? (
+                  <select value={intensity} onChange={(e) => setIntensity(e.target.value)} style={fcInput}>
+                    <option value="">Fouling Intensity</option>
+                    {foulingCfg.options.map(o => (
+                      <option key={o.label} value={o.label}>{o.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    readOnly
+                    placeholder="Fouling Intensity"
+                    value={foulingCfg.valid ? `Auto · Grade ${foulingCfg.grade}` : ""}
+                    style={{ ...fcInput, color: C.textMuted, cursor: "not-allowed", opacity: 0.7 }}
+                  />
+                )}
+        
+                <button
                   onClick={calculateCustomCurve}
-                  disabled={customLoading}
+                  disabled={customLoading || !customGrade || !customIdleDays}
+                  style={{
+                    padding: "10px 12px", borderRadius: 8,
+                    background: (customLoading || !customGrade) ? "rgba(14,165,233,0.4)" : C.accent,
+                    border: `1px solid ${C.border}`, color: "#fff", fontSize: 11,
+                    cursor: (customLoading || !customGrade) ? "not-allowed" : "pointer",
+                  }}
                 >
-                  {customLoading
-                    ? "Calculating..."
-                    : "Calculate"}
+                  {customLoading ? "Calculating..." : "Calculate"}
                 </button>
               </>
             )}
           </div>
+        
+          {foulingMode === "custom" && foulingCfg.note && (
+            <div style={{ marginTop: 8, fontSize: 10, color: C.textMuted }}>{foulingCfg.note}</div>
+          )}
         </div>
-
         <div
           style={{
             marginBottom: 16,
