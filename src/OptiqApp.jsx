@@ -977,6 +977,8 @@ function DashboardTab({
 }) {
   const [showFouled, setShowFouled] = useState(true);
   const [lockYAxis, setLockYAxis] = useState(false);
+  const [hoverLow, setHoverLow] = useState(null);    // hovered speed on left chart
+  const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
 
   const [intensity, setIntensity] = useState("");
@@ -1034,7 +1036,8 @@ function DashboardTab({
   const sharedMax = Math.ceil((Math.max(maxOfKey(lowKey), maxOfKey(rightKey)) + 500) / 500) * 500;
 
   // headline delta (penalty) at the top speed point, for a given key
-  const deltaSummary = (key) => {
+  // delta (penalty) at a given speed (or top speed if none hovered), for a given key
+  const deltaSummary = (key, atSpeed = null) => {
     const c = curves[key];
     if (!c) return null;
     const added = addedResistanceData?.[key];
@@ -1042,12 +1045,22 @@ function DashboardTab({
     const hasF = !!c.fouled_power;
     if (!hasF && !hasW) return null;
 
-    const i = c.speed.length - 1;                 // top speed point
+    // pick index: nearest to hovered speed, else last (top speed)
+    let i = c.speed.length - 1;
+    if (atSpeed != null) {
+      let best = Infinity;
+      c.speed.forEach((s, idx) => {
+        const d = Math.abs(s - atSpeed);
+        if (d < best) { best = d; i = idx; }
+      });
+    }
+
     const spd = Math.round(c.speed[i] * 10) / 10;
     const brake = Math.round(c.brake_power[i]);
     const fouled = hasF ? Math.round(c.fouled_power[i]) : brake;
     const top = hasW ? Math.round(fouled + (added.added_power_kW[i] || 0)) : fouled;
-    return { spd, delta: top - brake, top, brake };
+    const pct = brake > 0 ? Math.round(((top - brake) / brake) * 1000) / 10 : 0;
+    return { spd, delta: top - brake, top, brake, pct, hovered: atSpeed != null };
   };
   const anyWeather = weatherApplied && !!addedResistanceData;
 
@@ -1079,7 +1092,7 @@ function DashboardTab({
     });
   };
 
-  const renderPowerChart = (key) => {
+  const renderPowerChart = (key, onHover) => {
     const curve = curves[key];
     const data = buildChartData(key);
     const added = addedResistanceData?.[key];
@@ -1095,7 +1108,11 @@ function DashboardTab({
 
     return (
       <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
-        <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+        <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}
+          onMouseMove={(st) => {
+            if (onHover && st && st.activeLabel != null) onHover(Number(st.activeLabel));
+          }}
+          onMouseLeave={() => onHover && onHover(null)}>
           <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 3" vertical={false} />
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
@@ -1425,14 +1442,16 @@ function DashboardTab({
                 {lowKey ? `${curves[lowKey].draught} m` : "—"}
               </span>
             </div>
-            {renderPowerChart(lowKey)}
+            {renderPowerChart(lowKey, setHoverLow)}
             {(() => {
-              const d = deltaSummary(lowKey);
+              const d = deltaSummary(lowKey, hoverLow);
               return d ? (
                 <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
-                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>:{" "}
+                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>
+                  {!d.hovered && <span style={{ color: C.textMuted }}> (max — hover to scan)</span>}:{" "}
                   <span style={{ color: C.critical, fontWeight: 700 }}>+{d.delta.toLocaleString()} kW</span>{" "}
-                  <span style={{ color: C.textMuted }}>({d.brake.toLocaleString()} → {d.top.toLocaleString()} kW)</span>
+                  <span style={{ color: C.warning, fontWeight: 600 }}>(+{d.pct}%)</span>{" "}
+                  <span style={{ color: C.textMuted }}>{d.brake.toLocaleString()} → {d.top.toLocaleString()} kW</span>
                 </div>
               ) : null;
             })()}
@@ -1457,14 +1476,16 @@ function DashboardTab({
                 </span>
               )}
             </div>
-            {renderPowerChart(rightKey)}
+            {renderPowerChart(rightKey, setHoverRight)}
             {(() => {
-              const d = deltaSummary(rightKey);
+              const d = deltaSummary(rightKey, hoverRight);
               return d ? (
                 <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
-                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>:{" "}
+                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>
+                  {!d.hovered && <span style={{ color: C.textMuted }}> (max — hover to scan)</span>}:{" "}
                   <span style={{ color: C.critical, fontWeight: 700 }}>+{d.delta.toLocaleString()} kW</span>{" "}
-                  <span style={{ color: C.textMuted }}>({d.brake.toLocaleString()} → {d.top.toLocaleString()} kW)</span>
+                  <span style={{ color: C.warning, fontWeight: 600 }}>(+{d.pct}%)</span>{" "}
+                  <span style={{ color: C.textMuted }}>{d.brake.toLocaleString()} → {d.top.toLocaleString()} kW</span>
                 </div>
               ) : null;
             })()}
