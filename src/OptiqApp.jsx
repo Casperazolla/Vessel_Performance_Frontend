@@ -1122,10 +1122,17 @@ function DashboardTab({
           <Tooltip
             contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
             labelFormatter={v => `${v} kn`}
-            formatter={(value, name) => {
+            formatter={(value, name, props) => {
+              const clean = props?.payload?.brake_power;
               if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean Hull"];
-              if (name === "fouled_power") return [`${value.toLocaleString()} kW`, `Fouled (+${displayedPenalty}%)`];
-              if (name === "weather_power") return [`${value.toLocaleString()} kW`, "Weather Impact"];
+              if (name === "fouled_power") {
+                const pct = clean > 0 ? Math.round(((value - clean) / clean) * 1000) / 10 : null;
+                return [`${value.toLocaleString()} kW`, pct != null ? `Fouled (+${pct}%)` : "Fouled"];
+              }
+              if (name === "weather_power") {
+                const pct = clean > 0 ? Math.round(((value - clean) / clean) * 1000) / 10 : null;
+                return [`${value.toLocaleString()} kW`, pct != null ? `Weather Impact (+${pct}%)` : "Weather Impact"];
+              }
               return null;   // hide the band from the tooltip
             }}
           />
