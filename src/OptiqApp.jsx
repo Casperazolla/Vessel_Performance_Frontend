@@ -1006,21 +1006,28 @@ function DashboardTab({
     foulingMode === "custom"
       ? customPenalty
       : aggregatePenalty;
+
   const draughtKeys = Object.keys(curves);
-  const activeKey = selectedDraught || draughtKeys[draughtKeys.length - 1];
-  const activeCurve = curves[activeKey];
-  const addedCurve =
-    addedResistanceData?.[activeKey];
+  // sort by actual draught value so "lowest" / "highest" are numeric, not insertion order
+  const sortedKeys = [...draughtKeys].sort(
+    (a, b) => (curves[a]?.draught ?? 0) - (curves[b]?.draught ?? 0)
+  );
+  const lowKey = sortedKeys[0];                                   // left plot: always lowest
+  const highDefaultKey = sortedKeys[sortedKeys.length - 1];       // right plot default: highest
+  const rightKey = selectedDraught || highDefaultKey;            // right plot: user-selectable
 
+  const anyWeather = weatherApplied && !!addedResistanceData;
 
-  const hasWeather = weatherApplied && !!addedCurve?.added_power_kW;
+  // build the recharts rows for a given draught key
+  const buildChartData = (key) => {
+    const curve = curves[key];
+    if (!curve) return [];
+    const added = addedResistanceData?.[key];
+    const hasW = weatherApplied && !!added?.added_power_kW;
 
-  const chartData = activeCurve
-    ? activeCurve.speed.map((s, i) => {
-      const brakePower = Math.round(activeCurve.brake_power[i]);
-      const fouledPower = activeCurve.fouled_power
-        ? Math.round(activeCurve.fouled_power[i])
-        : null;
+    return curve.speed.map((s, i) => {
+      const brakePower = Math.round(curve.brake_power[i]);
+      const fouledPower = curve.fouled_power ? Math.round(curve.fouled_power[i]) : null;
 
       const row = {
         speed: Math.round(s * 10) / 10,
@@ -1028,16 +1035,59 @@ function DashboardTab({
         fouled_power: fouledPower,
       };
 
-      if (hasWeather) {
-        const addedPower = addedCurve.added_power_kW[i] || 0;
+      if (hasW) {
+        const addedPower = added.added_power_kW[i] || 0;
         const base = fouledPower !== null ? fouledPower : brakePower;
         row.weather_power = Math.round(base + addedPower);
       }
-
       return row;
-    })
-    : [];
+    });
+  };
 
+  const renderPowerChart = (key) => {
+    const curve = curves[key];
+    const data = buildChartData(key);
+    const added = addedResistanceData?.[key];
+    const hasW = weatherApplied && !!added?.added_power_kW;
+
+    if (!curve || data.length === 0) {
+      return (
+        <div style={{ height: isMobile ? 240 : 300, display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 13, border: `1px dashed ${C.border}`, borderRadius: 10 }}>
+          No chart available
+        </div>
+      );
+    }
+
+    return (
+      <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
+        <LineChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+          <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3" />
+          <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
+            label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
+          <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55} domain={[0, 'dataMax + 500']}
+            label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
+          <Tooltip
+            contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
+            labelFormatter={v => `${v} kn`}
+            formatter={(value, name) => {
+              if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean Hull"];
+              if (name === "fouled_power") return [`${value.toLocaleString()} kW`, `Fouled (+${displayedPenalty}%)`];
+              if (name === "weather_power") return [`${value.toLocaleString()} kW`, "Weather Impact"];
+              return [value, name];
+            }}
+          />
+          <Line type="monotone" dataKey="brake_power" stroke={C.accent} strokeWidth={2} dot={false} name="brake_power" />
+          {showFouled && displayedPenalty !== null && curve?.fouled_power && (
+            <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power" />
+          )}
+          {hasW && (
+            <Line type="monotone" dataKey="weather_power" stroke="#fbbf24" strokeWidth={3} dot={false} name="weather_power" />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  };
+  
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: "20px" }}>
@@ -1049,14 +1099,14 @@ function DashboardTab({
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
 
-            {draughtKeys.length > 1 && (
+            /* {draughtKeys.length > 1 && (
               <select value={activeKey || ""} onChange={e => setSelectedDraught(e.target.value)}
                 style={{ padding: "5px 10px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}>
                 {draughtKeys.map(k => (
                   <option key={k} value={k}>{curves[k].draught}m draught</option>
                 ))}
               </select>
-            )}
+            )} */
 
             {displayedPenalty !== null && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
@@ -1309,7 +1359,7 @@ function DashboardTab({
             </span>
           )}
 
-          {weatherApplied && addedCurve?.added_power_kW && (
+           {anyWeather && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 20, height: 2, background: "#fbbf24", display: "inline-block" }} />
               <span style={{ fontSize: 11, color: C.textSecondary }}>Weather Impact</span>
@@ -1318,58 +1368,44 @@ function DashboardTab({
         </div>
 
         {/* Chart */}
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={isMobile ? 240 : 320}>
-            <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3" />
-              <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
-                label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
-              <YAxis
-                tick={{ fontSize: 10, fill: C.textMuted }}
-                width={55}
-                domain={[0, 'dataMax + 500']}
-                label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
-              <Tooltip
-                contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
-                labelFormatter={v => `${v} kn`}
-                formatter={(value, name, props) => {
-                  if (name === "brake_power") {
-                    return [`${value.toLocaleString()} kW`, "Clean Hull"];
-                  } else if (name === "fouled_power") {
-                    // Show the specific power_loss_pct for this point
-                    const pointPowerLoss = props.payload?.power_loss_pct;
-                    const label = pointPowerLoss !== undefined
-                      ? `Fouled (+${pointPowerLoss.toFixed(2)}%)`
-                      : `Fouled (+${displayedPenalty}%)`;
-                    return [`${value.toLocaleString()} kW`, label];
-                  }
-                  return [value, name];
-                }}
-              />
-              <Line type="monotone" dataKey="brake_power" stroke={C.accent} strokeWidth={2} dot={false} name="brake_power" />
-              {showFouled && displayedPenalty !== null && activeCurve?.fouled_power && (
-                <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power" />
-              )}
-              {weatherApplied && addedCurve?.added_power_kW && (
-                <Line
-                  type="monotone"
-                  dataKey="weather_power"
-                  stroke="#fbbf24"
-                  strokeWidth={3}
-                  dot={false}
-                  name="weather_power"
-                />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        ) : shipData?.plot_url ? (
-          <img src={shipData.plot_url} alt="Speed vs Power"
-            style={{ width: "100%", borderRadius: 10, border: `1px solid ${C.borderCard}` }} />
-        ) : (
-          <div style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 13, border: `1px dashed ${C.border}`, borderRadius: 10 }}>
-            No chart available
+        {/* Charts — left fixed on lowest draught, right selectable (default highest) */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+
+          {/* Left — lowest draught (fixed) */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 28 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
+                Lowest draught
+              </span>
+              <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: C.accentDim, border: `1px solid ${C.border}`, color: C.accent }}>
+                {lowKey ? `${curves[lowKey].draught} m` : "—"}
+              </span>
+            </div>
+            {renderPowerChart(lowKey)}
           </div>
-        )}
+
+          {/* Right — selectable draught (default highest) */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 28, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
+                Compare draught
+              </span>
+              {draughtKeys.length > 1 ? (
+                <select value={rightKey || ""} onChange={e => setSelectedDraught(e.target.value)}
+                  style={{ padding: "4px 8px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}>
+                  {sortedKeys.map(k => (
+                    <option key={k} value={k}>{curves[k].draught} m draught</option>
+                  ))}
+                </select>
+              ) : (
+                <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: C.accentDim, border: `1px solid ${C.border}`, color: C.accent }}>
+                  {rightKey ? `${curves[rightKey].draught} m` : "—"}
+                </span>
+              )}
+            </div>
+            {renderPowerChart(rightKey)}
+          </div>
+        </div>
 
 
         {/* Penalty summary bar */}
