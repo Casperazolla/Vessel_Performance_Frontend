@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ReferenceLine, ResponsiveContainer, Area, AreaChart,
+  Tooltip, Legend, ReferenceLine, ResponsiveContainer, Area, AreaChart, ComposedChart,
 } from "recharts";
 
 
@@ -976,6 +976,7 @@ function DashboardTab({
 
 }) {
   const [showFouled, setShowFouled] = useState(true);
+  const [lockYAxis, setLockYAxis] = useState(false);
   const [selectedDraught, setSelectedDraught] = useState(null);
 
   const [intensity, setIntensity] = useState("");
@@ -1015,7 +1016,39 @@ function DashboardTab({
   const lowKey = sortedKeys[0];                                   // left plot: always lowest
   const highDefaultKey = sortedKeys[sortedKeys.length - 1];       // right plot default: highest
   const rightKey = selectedDraught || highDefaultKey;            // right plot: user-selectable
+  // shared Y max across both displayed charts (for the lock toggle)
+  const maxOfKey = (key) => {
+    const c = curves[key];
+    if (!c) return 0;
+    const added = addedResistanceData?.[key];
+    const hasW = weatherApplied && !!added?.added_power_kW;
+    let m = 0;
+    c.speed.forEach((_, i) => {
+      const brake = c.brake_power[i] || 0;
+      const fouled = c.fouled_power ? c.fouled_power[i] : brake;
+      const top = hasW ? (fouled + (added.added_power_kW[i] || 0)) : fouled;
+      m = Math.max(m, brake, fouled, top);
+    });
+    return m;
+  };
+  const sharedMax = Math.ceil((Math.max(maxOfKey(lowKey), maxOfKey(rightKey)) + 500) / 500) * 500;
 
+  // headline delta (penalty) at the top speed point, for a given key
+  const deltaSummary = (key) => {
+    const c = curves[key];
+    if (!c) return null;
+    const added = addedResistanceData?.[key];
+    const hasW = weatherApplied && !!added?.added_power_kW;
+    const hasF = !!c.fouled_power;
+    if (!hasF && !hasW) return null;
+
+    const i = c.speed.length - 1;                 // top speed point
+    const spd = Math.round(c.speed[i] * 10) / 10;
+    const brake = Math.round(c.brake_power[i]);
+    const fouled = hasF ? Math.round(c.fouled_power[i]) : brake;
+    const top = hasW ? Math.round(fouled + (added.added_power_kW[i] || 0)) : fouled;
+    return { spd, delta: top - brake, top, brake };
+  };
   const anyWeather = weatherApplied && !!addedResistanceData;
 
   // build the recharts rows for a given draught key
@@ -1040,6 +1073,8 @@ function DashboardTab({
         const base = fouledPower !== null ? fouledPower : brakePower;
         row.weather_power = Math.round(base + addedPower);
       }
+      const upper = row.weather_power ?? row.fouled_power;
+      if (upper != null) row.band = [brakePower, upper];
       return row;
     });
   };
@@ -1060,11 +1095,12 @@ function DashboardTab({
 
     return (
       <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
-        <LineChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-          <CartesianGrid stroke="rgba(255,255,255,0.15)" strokeDasharray="4 3" />
+        <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+          <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 3" vertical={false} />
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
-          <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55} domain={[0, 'dataMax + 500']}
+          <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55}
+            domain={lockYAxis ? [0, sharedMax] : [0, 'dataMax + 500']}
             label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
           <Tooltip
             contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
@@ -1073,9 +1109,11 @@ function DashboardTab({
               if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean Hull"];
               if (name === "fouled_power") return [`${value.toLocaleString()} kW`, `Fouled (+${displayedPenalty}%)`];
               if (name === "weather_power") return [`${value.toLocaleString()} kW`, "Weather Impact"];
-              return [value, name];
+              return null;   // hide the band from the tooltip
             }}
           />
+          {/* shaded penalty band between clean and the top active curve */}
+          <Area type="monotone" dataKey="band" stroke="none" fill="rgba(239,68,68,0.12)" isAnimationActive={false} legendType="none" />
           <Line type="monotone" dataKey="brake_power" stroke={C.accent} strokeWidth={2} dot={false} name="brake_power" />
           {showFouled && displayedPenalty !== null && curve?.fouled_power && (
             <Line type="monotone" dataKey="fouled_power" stroke={C.critical} strokeWidth={2} strokeDasharray="6 3" dot={false} name="fouled_power" />
@@ -1083,7 +1121,7 @@ function DashboardTab({
           {hasW && (
             <Line type="monotone" dataKey="weather_power" stroke="#fbbf24" strokeWidth={3} dot={false} name="weather_power" />
           )}
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     );
   };
@@ -1117,7 +1155,13 @@ function DashboardTab({
                 <span style={{ fontSize: 11, color: C.textSecondary }}>Fouled +{displayedPenalty}%</span>
               </div>
             )}
-
+            <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+              onClick={() => setLockYAxis(v => !v)}>
+              <div style={{ width: 32, height: 18, borderRadius: 9, position: "relative", background: lockYAxis ? C.accent : "rgba(255,255,255,0.12)", transition: "background .2s" }}>
+                <div style={{ position: "absolute", top: 2, left: lockYAxis ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left .2s" }} />
+              </div>
+              <span style={{ fontSize: 11, color: C.textSecondary }}>Lock Y-axes</span>
+            </div>
             {shipData?.pdf_url && (
               <a href={shipData.pdf_url} target="_blank" rel="noopener noreferrer"
                 style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textSecondary, fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
@@ -1382,6 +1426,16 @@ function DashboardTab({
               </span>
             </div>
             {renderPowerChart(lowKey)}
+            {(() => {
+              const d = deltaSummary(lowKey);
+              return d ? (
+                <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
+                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>:{" "}
+                  <span style={{ color: C.critical, fontWeight: 700 }}>+{d.delta.toLocaleString()} kW</span>{" "}
+                  <span style={{ color: C.textMuted }}>({d.brake.toLocaleString()} → {d.top.toLocaleString()} kW)</span>
+                </div>
+              ) : null;
+            })()}
           </div>
 
           {/* Right — selectable draught (default highest) */}
@@ -1404,6 +1458,16 @@ function DashboardTab({
               )}
             </div>
             {renderPowerChart(rightKey)}
+            {(() => {
+              const d = deltaSummary(rightKey);
+              return d ? (
+                <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
+                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>:{" "}
+                  <span style={{ color: C.critical, fontWeight: 700 }}>+{d.delta.toLocaleString()} kW</span>{" "}
+                  <span style={{ color: C.textMuted }}>({d.brake.toLocaleString()} → {d.top.toLocaleString()} kW)</span>
+                </div>
+              ) : null;
+            })()}
           </div>
         </div>
 
