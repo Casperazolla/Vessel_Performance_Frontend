@@ -1060,6 +1060,7 @@ function DashboardTab({
     const fouled = hasF ? Math.round(c.fouled_power[i]) : brake;
     const top = hasW ? Math.round(fouled + (added.added_power_kW[i] || 0)) : fouled;
     const pct = brake > 0 ? Math.round(((top - brake) / brake) * 1000) / 10 : 0;
+    const rightMax = Math.ceil((maxOfKey(rightKey) + 500) / 500) * 500;
     return { spd, delta: top - brake, top, brake, pct, hovered: atSpeed != null };
   };
   const anyWeather = weatherApplied && !!addedResistanceData;
@@ -1092,7 +1093,7 @@ function DashboardTab({
     });
   };
 
-  const renderPowerChart = (key, onHover) => {
+  const renderPowerChart = (key, onHover, forcedMax = null) => {
     const curve = curves[key];
     const data = buildChartData(key);
     const added = addedResistanceData?.[key];
@@ -1117,7 +1118,7 @@ function DashboardTab({
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
           <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55}
-            domain={lockYAxis ? [0, sharedMax] : [0, 'dataMax + 500']}
+            domain={forcedMax != null ? [0, forcedMax] : (lockYAxis ? [0, sharedMax] : [0, 'dataMax + 500'])}
             label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
           <Tooltip
             contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
@@ -1442,9 +1443,9 @@ function DashboardTab({
                 {lowKey ? `${curves[lowKey].draught} m` : "—"}
               </span>
             </div>
-            {renderPowerChart(lowKey, setHoverLow)}
+            {renderPowerChart(lowKey, setHoverLow, )}
             {(() => {
-              const d = deltaSummary(lowKey, hoverLow);
+              const d = deltaSummary(lowKey, hoverLow, rightMax);
               return d ? (
                 <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
                   Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>
