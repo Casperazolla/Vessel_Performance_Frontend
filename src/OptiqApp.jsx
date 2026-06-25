@@ -1061,7 +1061,7 @@ function DashboardTab({
     return (
       <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
         <LineChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-          <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3" />
+          <CartesianGrid stroke="rgba(255,255,255,0.15)" strokeDasharray="4 3" />
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
           <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55} domain={[0, 'dataMax + 500']}
