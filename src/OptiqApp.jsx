@@ -1434,7 +1434,7 @@ function DashboardTab({
 
           {/* Left — lowest draught (fixed) */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 28 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 28, flexWrap: "wrap"}}>
               <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
                 Lowest draught
               </span>
