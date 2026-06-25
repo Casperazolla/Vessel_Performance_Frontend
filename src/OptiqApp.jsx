@@ -1434,7 +1434,7 @@ function DashboardTab({
 
           {/* Left — lowest draught (fixed) */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 28, flexWrap: "wrap"}}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, height: 34 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
                 Lowest draught
               </span>
@@ -1459,7 +1459,7 @@ function DashboardTab({
 
           {/* Right — selectable draught (default highest) */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 28, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, height: 34, flexWrap: "nowrap" }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
                 Compare draught
               </span>
