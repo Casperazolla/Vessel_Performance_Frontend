@@ -1099,14 +1099,14 @@ function DashboardTab({
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
 
-            /* {draughtKeys.length > 1 && (
+            {/* {draughtKeys.length > 1 && (
               <select value={activeKey || ""} onChange={e => setSelectedDraught(e.target.value)}
                 style={{ padding: "5px 10px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}>
                 {draughtKeys.map(k => (
                   <option key={k} value={k}>{curves[k].draught}m draught</option>
                 ))}
               </select>
-            )} */
+            )} */}
 
             {displayedPenalty !== null && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
