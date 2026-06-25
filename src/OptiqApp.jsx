@@ -1116,7 +1116,7 @@ function DashboardTab({
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
           <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55}
-            domain={forcedMax != null ? [0, forcedMax] : [0, sharedMax] : [0, 'dataMax + 500'])}
+            domain={forcedMax != null ? [0, forcedMax] : [0, sharedMax]}
             label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
           <Tooltip
             contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
