@@ -1034,7 +1034,7 @@ function DashboardTab({
     return m;
   };
   const sharedMax = Math.ceil((Math.max(maxOfKey(lowKey), maxOfKey(rightKey)) + 500) / 500) * 500;
-
+  const rightMax = Math.ceil((maxOfKey(rightKey) + 500) / 500) * 500;
   // headline delta (penalty) at the top speed point, for a given key
   // delta (penalty) at a given speed (or top speed if none hovered), for a given key
   const deltaSummary = (key, atSpeed = null) => {
@@ -1060,7 +1060,6 @@ function DashboardTab({
     const fouled = hasF ? Math.round(c.fouled_power[i]) : brake;
     const top = hasW ? Math.round(fouled + (added.added_power_kW[i] || 0)) : fouled;
     const pct = brake > 0 ? Math.round(((top - brake) / brake) * 1000) / 10 : 0;
-    const rightMax = Math.ceil((maxOfKey(rightKey) + 500) / 500) * 500;
     return { spd, delta: top - brake, top, brake, pct, hovered: atSpeed != null };
   };
   const anyWeather = weatherApplied && !!addedResistanceData;
@@ -1443,9 +1442,9 @@ function DashboardTab({
                 {lowKey ? `${curves[lowKey].draught} m` : "—"}
               </span>
             </div>
-            {renderPowerChart(lowKey, setHoverLow, )}
+            {renderPowerChart(lowKey, setHoverLow, rightMax )}
             {(() => {
-              const d = deltaSummary(lowKey, hoverLow, rightMax);
+              const d = deltaSummary(lowKey, hoverLow);
               return d ? (
                 <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
                   Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>
