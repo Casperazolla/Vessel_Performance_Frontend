@@ -976,7 +976,6 @@ function DashboardTab({
 
 }) {
   const [showFouled, setShowFouled] = useState(true);
-  const [lockYAxis, setLockYAxis] = useState(false);
   const [hoverLow, setHoverLow] = useState(null);    // hovered speed on left chart
   const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
@@ -1117,7 +1116,7 @@ function DashboardTab({
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
           <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55}
-            domain={forcedMax != null ? [0, forcedMax] : (lockYAxis ? [0, sharedMax] : [0, 'dataMax + 500'])}
+            domain={forcedMax != null ? [0, forcedMax] : [0, sharedMax] : [0, 'dataMax + 500'])}
             label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
           <Tooltip
             contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
@@ -1179,13 +1178,6 @@ function DashboardTab({
                 <span style={{ fontSize: 11, color: C.textSecondary }}>Fouled +{displayedPenalty}%</span>
               </div>
             )}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
-              onClick={() => setLockYAxis(v => !v)}>
-              <div style={{ width: 32, height: 18, borderRadius: 9, position: "relative", background: lockYAxis ? C.accent : "rgba(255,255,255,0.12)", transition: "background .2s" }}>
-                <div style={{ position: "absolute", top: 2, left: lockYAxis ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left .2s" }} />
-              </div>
-              <span style={{ fontSize: 11, color: C.textSecondary }}>Lock Y-axes</span>
-            </div>
             {shipData?.pdf_url && (
               <a href={shipData.pdf_url} target="_blank" rel="noopener noreferrer"
                 style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textSecondary, fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
