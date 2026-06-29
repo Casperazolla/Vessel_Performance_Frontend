@@ -629,6 +629,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
 
 
   const [areaT, setAreaT] = useState("");
+  const [seaState, setSeaState] = useState("0");
   const [marineData, setMarineData] = useState(null);
   const [addedResistanceData, setAddedResistanceData] = useState(null);
   const [course, setCourse] = useState("");
@@ -722,7 +723,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
       }
 
       const response = await fetch(
-        `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&ship_course_deg=${marineData.hdg}&area_t=${areaT}`
+        `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&ship_course_deg=${marineData.hdg}&area_t=${areaT}&sea_state=${seaState}`
       );
 
       const data = await response.json();
@@ -873,6 +874,8 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
             setCustomIdleDays={setCustomIdleDays}
 
             calculateCustomCurve={calculateCustomCurve}
+            seaState={seaState}
+            setSeaState={setSeaState}
 
             customLoading={customLoading}
 
@@ -973,6 +976,8 @@ function DashboardTab({
   customFouledCurves,
   customPenalty,
   setActiveTab,
+  seaState,
+  setSeaState,
 
 }) {
   const [showFouled, setShowFouled] = useState(true);
@@ -1356,6 +1361,45 @@ function DashboardTab({
                   color: C.textSecondary,
                 }}
               />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 6,
+                  fontSize: 11,
+                  color: C.accent,
+                  fontWeight: 600,
+                }}
+              >
+                Sea State
+              </label>
+
+              <select
+                value={seaState}
+                onChange={(e) => setSeaState(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: 8,
+                  background: C.inputBg,
+                  border: `1px solid ${C.accent}`,
+                  color: C.textPrimary,
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                <option value="0">0 - Calm (glassy)</option>
+                <option value="1">1 - Calm (rippled)</option>
+                <option value="2">2 - Smooth</option>
+                <option value="3">3 - Slight</option>
+                <option value="4">4 - Moderate</option>
+                <option value="5">5 - Rough</option>
+                <option value="6">6 - Very rough</option>
+                <option value="7">7 - High</option>
+                <option value="8">8 - Very high</option>
+              </select>
             </div>
 
             <div>
