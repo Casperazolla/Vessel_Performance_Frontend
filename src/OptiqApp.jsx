@@ -988,6 +988,7 @@ function DashboardTab({
   const [hoverLow, setHoverLow] = useState(null);    // hovered speed on left chart
   const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
+  const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
   
 
   const [intensity, setIntensity] = useState("");
@@ -1159,6 +1160,41 @@ function DashboardTab({
     );
   };
 
+
+
+  const fetchFuelConsumptionData = async () => {
+    try {
+      const response = await fetch(
+  "https://da.azolla.sg/vessel/fuel_consumption",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      imo: shipData.imo,
+     
+    }),
+  }
+);
+
+      const data = await response.json();
+      console.log(data);
+
+      if (data.status === "success") {
+        setFuelConsumptionData(data.fuel_consumption_data);
+      }
+    } catch (err) {
+      console.log(err);
+      
+    }
+  };
+
+  useEffect(() => {
+    if (shipData?.imo){
+      fetchFuelConsumptionData();
+    }
+    }, [shipData?.imo]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1557,57 +1593,125 @@ function DashboardTab({
           </div>
         )}
 
-        {/* {fuelConsumptionData &&
-          Object.keys(fuelConsumptionData).length > 0 && (
-
-            <table>
-
-              <thead>
-                <tr>
-
-                  <th>Draught</th>
-
-                  {
-                    fuelConsumptionData[
-                      Object.keys(fuelConsumptionData)[0]
-                    ].speed.map((speed) => (
-                      <th key={speed}>{speed}</th>
-                    ))
-                  }
-
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {
-                  Object.entries(fuelConsumptionData).map(
-                    ([key, draughtData]) => (
-
-                      <tr key={key}>
-
-                        <td>{draughtData.draught}</td>
-
-                        {
-                          draughtData.fuel_t_per_day.map((fuel, index) =>
-
-                            <td key={index}>{fuel.toFixed(3)}</td>
-
-                          )
-                        }
-
-                      </tr>
-
-                    )
-                  )
-                }
-
-              </tbody>
-
-            </table>
-
-          )} */}
+       
       </div>
+
+       {fuelConsumptionData &&
+          Object.keys(fuelConsumptionData).length > 0 && (
+           <div style={{ overflowX: "auto", marginTop: 24, border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.cardSolid, padding: 16 }}>
+  <table
+    style={{
+      width: "100%",
+      borderCollapse: "collapse",
+      border: "1px solid #444",
+      color: "white",
+    }}
+  >
+    <thead>
+      <tr>
+       <th
+  style={{
+    position: "relative",
+    border: "1px solid #444",
+    background: "#1f2937",
+    width: "120px",
+    minWidth: "120px",
+    height: "70px",
+    padding: 0,
+  }}
+>
+  
+  <div
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background:
+        "linear-gradient(to bottom left, transparent 49%, #888 50%, transparent 51%)",
+    }}
+  />
+
+ 
+  <span
+    style={{
+      position: "absolute",
+      top: "8px",
+      right: "10px",
+      fontWeight: 600,
+      color: C.accent,
+    }}
+  >
+    Speed
+  </span>
+
+ 
+  <span
+    style={{
+      position: "absolute",
+      bottom: "8px",
+      left: "10px",
+      fontWeight: 600,
+      color: C.accent,
+    }}
+  >
+    Draught
+  </span>
+</th>
+
+        {fuelConsumptionData[
+          Object.keys(fuelConsumptionData)[0]
+        ].speed.map((speed) => (
+          <th
+            key={speed}
+            style={{
+              border: "1px solid #444",
+              padding: "10px",
+              background: "#1f2937",
+              textAlign: "center",
+              color: C.accent,
+            }}
+          >
+            {speed.toFixed(1)}
+          </th>
+        ))}
+      </tr>
+    </thead>
+
+    <tbody>
+      {Object.entries(fuelConsumptionData).map(([key, draughtData]) => (
+        <tr key={key}>
+          <td
+            style={{
+              border: "1px solid #444",
+              padding: "10px",
+              fontWeight: 600,
+              color: C.accent,
+            }}
+          >
+            {draughtData.draught}
+          </td>
+
+          {draughtData.fuel_t_per_day.map((fuel, index) => (
+            <td
+              key={index}
+              style={{
+                border: "1px solid #444",
+                padding: "10px",
+                textAlign: "center",
+                color: C.textSecondary,
+              }}
+            >
+              {fuel.toFixed(3)}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+          )}
     </div>
   );
 }
