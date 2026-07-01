@@ -580,9 +580,11 @@ function getFoulingConfig(idleDaysRaw) {
     return { valid: false, needsIntensity: false, options: [], grade: null, note: "Idle days must be ≤ 365" };
 
   if (d <= 40)
-    return { valid: true, needsIntensity: true, grade: null,
-             options: [{ label: "High", grade: 2 }, { label: "Low", grade: 1 }],
-             note: "Select fouling intensity (High → grade 2, Low → grade 1)" };
+    return {
+      valid: true, needsIntensity: true, grade: null,
+      options: [{ label: "High", grade: 2 }, { label: "Low", grade: 1 }],
+      note: "Select fouling intensity (High → grade 2, Low → grade 1)"
+    };
 
   if (d <= 49)
     return { valid: true, needsIntensity: false, options: [], grade: 2, note: "Fouling grade auto-assigned: 2" };
@@ -591,9 +593,11 @@ function getFoulingConfig(idleDaysRaw) {
     return { valid: true, needsIntensity: false, options: [], grade: 3, note: "Fouling grade auto-assigned: 3" };
 
   if (d <= 120)
-    return { valid: true, needsIntensity: true, grade: null,
-             options: [{ label: "High Calcareous", grade: 4 }, { label: "Low Calcareous", grade: 3 }],
-             note: "Select fouling intensity (High Calcareous → grade 4, Low Calcareous → grade 3)" };
+    return {
+      valid: true, needsIntensity: true, grade: null,
+      options: [{ label: "High Calcareous", grade: 4 }, { label: "Low Calcareous", grade: 3 }],
+      note: "Select fouling intensity (High Calcareous → grade 4, Low Calcareous → grade 3)"
+    };
 
   if (d <= 166)
     return { valid: true, needsIntensity: false, options: [], grade: 5, note: "Fouling grade auto-assigned: 5" };
@@ -642,7 +646,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
   const [windSpeed, setWindSpeed] = useState("");
   const [windDirection, setWindDirection] = useState("");
   const [weatherApplied, setWeatherApplied] = useState(false);
-  
+
   const fetchMarineData = async () => {
     try {
       const response = await fetch(
@@ -984,6 +988,7 @@ function DashboardTab({
   const [hoverLow, setHoverLow] = useState(null);    // hovered speed on left chart
   const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
+  
 
   const [intensity, setIntensity] = useState("");
   const foulingCfg = getFoulingConfig(customIdleDays);
@@ -1003,7 +1008,7 @@ function DashboardTab({
     padding: "10px", borderRadius: 8,
     background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary,
   };
-  
+
   const curves =
     foulingMode === "custom"
       ? (customFouledCurves || shipData?.draught_curves || {})
@@ -1153,7 +1158,8 @@ function DashboardTab({
       </ResponsiveContainer>
     );
   };
-  
+
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: "20px" }}>
@@ -1202,7 +1208,7 @@ function DashboardTab({
           <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: C.accent }}>
             Fouling Curve
           </label>
-        
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, alignItems: "center" }}>
             <select
               value={foulingMode}
@@ -1216,7 +1222,7 @@ function DashboardTab({
               <option value="image">Image Based</option>
               <option value="custom">Custom</option>
             </select>
-        
+
             {foulingMode === "custom" && (
               <>
                 {/* Idle Days — comes first now */}
@@ -1227,7 +1233,7 @@ function DashboardTab({
                   onChange={(e) => { setCustomIdleDays(e.target.value); setIntensity(""); }}
                   style={fcInput}
                 />
-        
+
                 {/* Fouling Intensity — selectable only in the ≤40 and 88–120 bands */}
                 {foulingCfg.needsIntensity ? (
                   <select value={intensity} onChange={(e) => setIntensity(e.target.value)} style={fcInput}>
@@ -1244,7 +1250,7 @@ function DashboardTab({
                     style={{ ...fcInput, color: C.textMuted, cursor: "not-allowed", opacity: 0.7 }}
                   />
                 )}
-        
+
                 <button
                   onClick={calculateCustomCurve}
                   disabled={customLoading || !customGrade || !customIdleDays}
@@ -1260,7 +1266,7 @@ function DashboardTab({
               </>
             )}
           </div>
-        
+
           {foulingMode === "custom" && foulingCfg.note && (
             <div style={{ marginTop: 8, fontSize: 10, color: C.textMuted }}>{foulingCfg.note}</div>
           )}
@@ -1277,7 +1283,7 @@ function DashboardTab({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1fr 1fr 1fr auto",
+              gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr",
               gap: 12,
               alignItems: "center",
             }}
@@ -1463,7 +1469,7 @@ function DashboardTab({
             </span>
           )}
 
-           {anyWeather && (
+          {anyWeather && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 20, height: 2, background: "#fbbf24", display: "inline-block" }} />
               <span style={{ fontSize: 11, color: C.textSecondary }}>Weather Impact</span>
@@ -1485,7 +1491,7 @@ function DashboardTab({
                 {lowKey ? `${curves[lowKey].draught} m` : "—"}
               </span>
             </div>
-            {renderPowerChart(lowKey, setHoverLow, rightMax )}
+            {renderPowerChart(lowKey, setHoverLow, rightMax)}
             {(() => {
               const d = deltaSummary(lowKey, hoverLow);
               return d ? (
@@ -1550,6 +1556,57 @@ function DashboardTab({
             </div>
           </div>
         )}
+
+        {/* {fuelConsumptionData &&
+          Object.keys(fuelConsumptionData).length > 0 && (
+
+            <table>
+
+              <thead>
+                <tr>
+
+                  <th>Draught</th>
+
+                  {
+                    fuelConsumptionData[
+                      Object.keys(fuelConsumptionData)[0]
+                    ].speed.map((speed) => (
+                      <th key={speed}>{speed}</th>
+                    ))
+                  }
+
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {
+                  Object.entries(fuelConsumptionData).map(
+                    ([key, draughtData]) => (
+
+                      <tr key={key}>
+
+                        <td>{draughtData.draught}</td>
+
+                        {
+                          draughtData.fuel_t_per_day.map((fuel, index) =>
+
+                            <td key={index}>{fuel.toFixed(3)}</td>
+
+                          )
+                        }
+
+                      </tr>
+
+                    )
+                  )
+                }
+
+              </tbody>
+
+            </table>
+
+          )} */}
       </div>
     </div>
   );
