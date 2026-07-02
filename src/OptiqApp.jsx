@@ -695,6 +695,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
         setCustomPenalty(
           Math.round(penalty * 100) / 100
         );
+
       }
     } catch (err) {
       console.error(err);
@@ -1003,7 +1004,10 @@ function DashboardTab({
     } else {
       setCustomGrade(String(foulingCfg.grade));
     }
-  }, [customIdleDays, intensity]);   // eslint-disable-line
+  }, [customIdleDays, intensity]);   
+
+
+  
 
   const fcInput = {
     padding: "10px", borderRadius: 8,
@@ -1163,6 +1167,19 @@ function DashboardTab({
 
 
   const fetchFuelConsumptionData = async () => {
+
+    const curvesToSend =
+  weatherApplied && addedResistanceData
+    ? Object.fromEntries(
+        Object.keys(curves).map((key) => [
+          key,
+          {
+            ...curves[key],
+            added_power_kW: addedResistanceData[key]?.added_power_kW || [],
+          },
+        ])
+      )
+    : curves;
     try {
       const response = await fetch(
   "https://da.azolla.sg/vessel/fuel_consumption",
@@ -1189,12 +1206,26 @@ function DashboardTab({
       
     }
   };
+useEffect(() => {
+  if (
+    shipData?.imo &&
+    (
+      customFouledCurves ||
+      fouledCurves ||
+      weatherApplied
+    )
+  ) {
+    fetchFuelConsumptionData();
+  }
+}, [
+  customFouledCurves,
+  fouledCurves,
+  weatherApplied,
+]);
 
-  useEffect(() => {
-    if (shipData?.imo){
-      fetchFuelConsumptionData();
-    }
-    }, [shipData?.imo]);
+  
+
+ 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
