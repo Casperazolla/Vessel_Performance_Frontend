@@ -1167,61 +1167,48 @@ function DashboardTab({
 
 
   const fetchFuelConsumptionData = async () => {
+  // fuel is only valid on final power = fouled + added, so require both
+  if (!weatherApplied || !addedResistanceData) return;
 
-    const curvesToSend =
-  weatherApplied && addedResistanceData
-    ? Object.fromEntries(
-        Object.keys(curves).map((key) => [
-          key,
-          {
-            ...curves[key],
-            added_power_kW: addedResistanceData[key]?.added_power_kW || [],
-          },
-        ])
-      )
-    : curves;
-    try {
-      const response = await fetch(
-  "https://da.azolla.sg/vessel/fuel_consumption",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imo: shipData.imo,
-     
-    }),
-  }
-);
+  // the fouled curves currently in view (custom or image-based)
+  const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
+  if (!fouledSource) return;
 
-      const data = await response.json();
-      console.log(data);
-
-      if (data.status === "success") {
-        setFuelConsumptionData(data.fuel_consumption_data);
-      }
-    } catch (err) {
-      console.log(err);
-      
+  // build { key: { fouled_power, added_power_kW } } keyed by draught, matching S3 keys
+  const curvesPayload = {};
+  Object.keys(fouledSource).forEach((key) => {
+    const fp = fouledSource[key]?.fouled_power;
+    const ap = addedResistanceData[key]?.added_power_kW;
+    if (fp && ap) {
+      curvesPayload[key] = { fouled_power: fp, added_power_kW: ap };
     }
-  };
+  });
+
+  if (Object.keys(curvesPayload).length === 0) return;
+
+  try {
+    const response = await fetch("https://da.azolla.sg/vessel/fuel_consumption", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imo: shipData.imo,
+        curves: curvesPayload,      // <-- the piece that was missing
+      }),
+    });
+    const data = await response.json();
+    console.log(data);
+    if (data.status === "success") setFuelConsumptionData(data.fuel_consumption_data);
+    else setFuelConsumptionData(null);   // clear stale table on error
+  } catch (err) {
+    console.log(err);
+  }
+};
 useEffect(() => {
-  if (
-    shipData?.imo &&
-    (
-      customFouledCurves ||
-      fouledCurves ||
-      weatherApplied
-    )
-  ) {
+  const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
+  if (shipData?.imo && fouledSource && weatherApplied && addedResistanceData) {
     fetchFuelConsumptionData();
   }
-}, [
-  customFouledCurves,
-  fouledCurves,
-  weatherApplied,
-]);
+}, [customFouledCurves, fouledCurves, weatherApplied, addedResistanceData, foulingMode]);
 
   
 
