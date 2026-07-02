@@ -990,7 +990,10 @@ function DashboardTab({
   const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
   const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
-  
+  const [selectedDraught, setSelectedDraught] = useState(null);
+  const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
+  const [fuelUnit, setFuelUnit] = useState("tpd");        // "tpd" | "usd"
+  const [bunkerPrice, setBunkerPrice] = useState("650");   // $/tonne
 
   const [intensity, setIntensity] = useState("");
   const foulingCfg = getFoulingConfig(customIdleDays);
@@ -1209,10 +1212,26 @@ useEffect(() => {
     fetchFuelConsumptionData();
   }
 }, [customFouledCurves, fouledCurves, weatherApplied, addedResistanceData, foulingMode]);
+  const fuelValues = fuelConsumptionData
+    ? Object.values(fuelConsumptionData).flatMap(d => d.fuel_t_per_day)
+    : [];
+  const fuelMin = fuelValues.length ? Math.min(...fuelValues) : 0;
+  const fuelMax = fuelValues.length ? Math.max(...fuelValues) : 1;
 
-  
+  const fuelCellStyle = (tpd) => {
+    const frac = fuelMax > fuelMin ? (tpd - fuelMin) / (fuelMax - fuelMin) : 0;
+    const band = frac < 0.34
+      ? { bg: "rgba(16,185,129,0.14)", fg: "#6ee7b7" }
+      : frac < 0.67
+        ? { bg: "rgba(245,158,11,0.14)", fg: "#fcd34d" }
+        : { bg: "rgba(239,68,68,0.14)", fg: "#fca5a5" };
+    return { background: band.bg, color: band.fg };
+  };
 
- 
+  const priceNum = parseFloat(bunkerPrice) || 0;
+  const fmtCell = (tpd) =>
+    fuelUnit === "usd" ? Math.round(tpd * priceNum).toLocaleString() : tpd.toFixed(1);
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1605,8 +1624,10 @@ useEffect(() => {
             </div>
             <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.08)" }} />
             <div style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>
-              Hull fouling will lead to <span style={{ color: C.critical, fontWeight: 700 }}>{displayedPenalty}% more power consumption on an average</span>.
-              Switch to Hull Analysis to update values.
+              Hull fouling will lead to <span style={{ color: C.critical, fontWeight: 700 }}>{displayedPenalty}% more power consumption on average</span>.
+              {foulingMode === "custom"
+                ? " Based on custom idle-days input."
+                : " Switch to Hull Analysis to update values."}
             </div>
           </div>
         )}
@@ -1614,122 +1635,93 @@ useEffect(() => {
        
       </div>
 
-       {fuelConsumptionData &&
-          Object.keys(fuelConsumptionData).length > 0 && (
-           <div style={{ overflowX: "auto", marginTop: 24, border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.cardSolid, padding: 16 }}>
-  <table
-    style={{
-      width: "100%",
-      borderCollapse: "collapse",
-      border: "1px solid #444",
-      color: "white",
-    }}
-  >
-    <thead>
-      <tr>
-       <th
-  style={{
-    position: "relative",
-    border: "1px solid #444",
-    background: "#1f2937",
-    width: "120px",
-    minWidth: "120px",
-    height: "70px",
-    padding: 0,
-  }}
->
-  
-  <div
-    style={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      background:
-        "linear-gradient(to bottom left, transparent 49%, #888 50%, transparent 51%)",
-    }}
-  />
+       {fuelConsumptionData && Object.keys(fuelConsumptionData).length > 0 && (
+  <div style={{ marginTop: 24, border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.cardSolid, padding: 16 }}>
 
- 
-  <span
-    style={{
-      position: "absolute",
-      top: "8px",
-      right: "10px",
-      fontWeight: 600,
-      color: C.accent,
-    }}
-  >
-    Speed
-  </span>
+    {/* Header row: title + caption + unit toggle */}
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
+          Fuel Consumption {fuelUnit === "usd" ? "($/day)" : "(t/day)"}
+        </div>
+        <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+          On final power — includes fouling + weather
+        </div>
+      </div>
 
- 
-  <span
-    style={{
-      position: "absolute",
-      bottom: "8px",
-      left: "10px",
-      fontWeight: 600,
-      color: C.accent,
-    }}
-  >
-    Draught
-  </span>
-</th>
-
-        {fuelConsumptionData[
-          Object.keys(fuelConsumptionData)[0]
-        ].speed.map((speed) => (
-          <th
-            key={speed}
-            style={{
-              border: "1px solid #444",
-              padding: "10px",
-              background: "#1f2937",
-              textAlign: "center",
-              color: C.accent,
-            }}
-          >
-            {speed.toFixed(1)}
-          </th>
-        ))}
-      </tr>
-    </thead>
-
-    <tbody>
-      {Object.entries(fuelConsumptionData).map(([key, draughtData]) => (
-        <tr key={key}>
-          <td
-            style={{
-              border: "1px solid #444",
-              padding: "10px",
-              fontWeight: 600,
-              color: C.accent,
-            }}
-          >
-            {draughtData.draught}
-          </td>
-
-          {draughtData.fuel_t_per_day.map((fuel, index) => (
-            <td
-              key={index}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {fuelUnit === "usd" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: C.textMuted }}>Bunker $/t</span>
+            <input
+              type="number"
+              value={bunkerPrice}
+              onChange={(e) => setBunkerPrice(e.target.value)}
+              style={{ width: 70, padding: "5px 8px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}
+            />
+          </div>
+        )}
+        <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+          {["tpd", "usd"].map((u) => (
+            <span
+              key={u}
+              onClick={() => setFuelUnit(u)}
               style={{
-                border: "1px solid #444",
-                padding: "10px",
-                textAlign: "center",
-                color: C.textSecondary,
+                padding: "6px 14px", fontSize: 11, cursor: "pointer",
+                background: fuelUnit === u ? C.accentDim : "transparent",
+                color: fuelUnit === u ? C.accent : C.textSecondary,
               }}
             >
-              {fuel.toFixed(3)}
-            </td>
+              {u === "tpd" ? "t/day" : "$/day"}
+            </span>
           ))}
-        </tr>
+        </div>
+      </div>
+    </div>
+
+    {/* Table */}
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+        <thead>
+          <tr>
+            <th style={{ position: "sticky", left: 0, zIndex: 1, background: C.statBg, textAlign: "left", padding: "10px 12px", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
+              Draught \ Speed (kn)
+            </th>
+            {fuelConsumptionData[Object.keys(fuelConsumptionData)[0]].speed.map((speed) => (
+              <th key={speed} style={{ padding: "10px 12px", background: C.statBg, textAlign: "center", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
+                {speed.toFixed(1)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(fuelConsumptionData).map(([key, d]) => (
+            <tr key={key}>
+              <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.statBg, padding: "10px 12px", fontWeight: 600, color: C.accent, border: `1px solid ${C.borderSubtle}` }}>
+                {d.draught} m
+              </td>
+              {d.fuel_t_per_day.map((fuel, i) => (
+                <td key={i} style={{ padding: "10px 12px", textAlign: "center", border: `1px solid ${C.borderSubtle}`, ...fuelCellStyle(fuel) }}>
+                  {fmtCell(fuel)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Legend */}
+    <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, color: C.textMuted }}>
+      {[["rgba(16,185,129,0.4)", "lower"], ["rgba(245,158,11,0.4)", "mid"], ["rgba(239,68,68,0.4)", "higher"]].map(([c, l]) => (
+        <span key={l}>
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: c, verticalAlign: "middle", marginRight: 5 }} />
+          {l}
+        </span>
       ))}
-    </tbody>
-  </table>
-</div>
-          )}
+    </div>
+  </div>
+)}
     </div>
   );
 }
