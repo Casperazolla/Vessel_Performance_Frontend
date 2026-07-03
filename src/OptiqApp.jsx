@@ -990,8 +990,8 @@ function DashboardTab({
   const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
   const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
-  const [selectedDraught, setSelectedDraught] = useState(null);
-  const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
+  // const [selectedDraught, setSelectedDraught] = useState(null);
+  // const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
   const [fuelUnit, setFuelUnit] = useState("tpd");        // "tpd" | "usd"
   const [bunkerPrice, setBunkerPrice] = useState("650");   // $/tonne
 
@@ -1170,24 +1170,28 @@ function DashboardTab({
 
 
   const fetchFuelConsumptionData = async () => {
-  // fuel is only valid on final power = fouled + added, so require both
-  if (!weatherApplied || !addedResistanceData) return;
+ 
 
   // the fouled curves currently in view (custom or image-based)
   const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
   if (!fouledSource) return;
 
-  // build { key: { fouled_power, added_power_kW } } keyed by draught, matching S3 keys
-  const curvesPayload = {};
-  Object.keys(fouledSource).forEach((key) => {
-    const fp = fouledSource[key]?.fouled_power;
-    const ap = addedResistanceData[key]?.added_power_kW;
-    if (fp && ap) {
-      curvesPayload[key] = { fouled_power: fp, added_power_kW: ap };
-    }
-  });
+ const curvesPayload = {};
 
-  if (Object.keys(curvesPayload).length === 0) return;
+Object.keys(fouledSource).forEach((key) => {
+  const fp = fouledSource[key]?.fouled_power;
+
+  if (!fp) return;
+
+  curvesPayload[key] = {
+    fouled_power: fp,
+
+    added_power_kW:
+      weatherApplied && addedResistanceData?.[key]?.added_power_kW
+        ? addedResistanceData[key].added_power_kW
+        : new Array(fp.length).fill(0),
+  };
+});
 
   try {
     const response = await fetch("https://da.azolla.sg/vessel/fuel_consumption", {
@@ -1208,9 +1212,12 @@ function DashboardTab({
 };
 useEffect(() => {
   const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
-  if (shipData?.imo && fouledSource && weatherApplied && addedResistanceData) {
+ if (
+    shipData?.imo &&
+    fouledSource
+) {
     fetchFuelConsumptionData();
-  }
+}
 }, [customFouledCurves, fouledCurves, weatherApplied, addedResistanceData, foulingMode]);
   const fuelValues = fuelConsumptionData
     ? Object.values(fuelConsumptionData).flatMap(d => d.fuel_t_per_day)
