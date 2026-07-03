@@ -1652,8 +1652,8 @@ useEffect(() => {
           Fuel Consumption {fuelUnit === "usd" ? "($/day)" : "(t/day)"}
         </div>
         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
-          On final power — includes fouling + weather
-        </div>
+{        weatherApplied ? "On final power - includes Fouling + Weather" : "On final power - includes Fouling"
+}        </div>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1691,9 +1691,56 @@ useEffect(() => {
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
         <thead>
           <tr>
-            <th style={{ position: "sticky", left: 0, zIndex: 1, background: C.statBg, textAlign: "left", padding: "10px 12px", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
-              Draught \ Speed (kn)
-            </th>
+              <th
+  style={{
+    position: "relative",
+    border: "1px solid #444",
+    background: "#1f2937",
+    width: "80px",
+    minWidth: "80px",
+    height: "70px",
+    padding: 0,
+  }}
+>
+  
+  <div
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background:
+        "linear-gradient(to bottom left, transparent 49%, #888 50%, transparent 51%)",
+    }}
+  />
+
+ 
+  <span
+    style={{
+      position: "absolute",
+      top: "8px",
+      right: "10px",
+      fontWeight: 600,
+      color: C.accent,
+    }}
+  >
+    Speed
+  </span>
+
+ 
+  <span
+    style={{
+      position: "absolute",
+      bottom: "8px",
+      left: "10px",
+      fontWeight: 600,
+      color: C.accent,
+    }}
+  >
+    Draught
+  </span>
+</th>
             {fuelConsumptionData[Object.keys(fuelConsumptionData)[0]].speed.map((speed) => (
               <th key={speed} style={{ padding: "10px 12px", background: C.statBg, textAlign: "center", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
                 {speed.toFixed(1)}
