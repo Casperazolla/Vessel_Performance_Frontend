@@ -646,6 +646,8 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
   const [windSpeed, setWindSpeed] = useState("");
   const [windDirection, setWindDirection] = useState("");
   const [weatherApplied, setWeatherApplied] = useState(false);
+  const [addedPowerMode, setAddedPowerMode] = useState("manual");
+  const [weatherState, setWeatherState] = useState("head");
 
   const fetchMarineData = async () => {
     try {
@@ -887,6 +889,11 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
             customFouledCurves={customFouledCurves}
             customPenalty={customPenalty}
             setActiveTab={setActiveTab}
+            addedPowerMode={addedPowerMode}
+            setAddedPowerMode={setAddedPowerMode}
+            weatherState={weatherState}
+            setWeatherState={setWeatherState}
+
 
           />}
           {activeTab === "hull" && (
@@ -983,6 +990,10 @@ function DashboardTab({
   setActiveTab,
   seaState,
   setSeaState,
+  addedPowerMode,
+  setAddedPowerMode,
+  weatherState,
+  setWeatherState,
 
 }) {
   const [showFouled, setShowFouled] = useState(true);
@@ -1007,10 +1018,10 @@ function DashboardTab({
     } else {
       setCustomGrade(String(foulingCfg.grade));
     }
-  }, [customIdleDays, intensity]);   
+  }, [customIdleDays, intensity]);
 
 
-  
+
 
   const fcInput = {
     padding: "10px", borderRadius: 8,
@@ -1170,55 +1181,55 @@ function DashboardTab({
 
 
   const fetchFuelConsumptionData = async () => {
- 
 
-  // the fouled curves currently in view (custom or image-based)
-  const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
-  if (!fouledSource) return;
 
- const curvesPayload = {};
+    // the fouled curves currently in view (custom or image-based)
+    const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
+    if (!fouledSource) return;
 
-Object.keys(fouledSource).forEach((key) => {
-  const fp = fouledSource[key]?.fouled_power;
+    const curvesPayload = {};
 
-  if (!fp) return;
+    Object.keys(fouledSource).forEach((key) => {
+      const fp = fouledSource[key]?.fouled_power;
 
-  curvesPayload[key] = {
-    fouled_power: fp,
+      if (!fp) return;
 
-    added_power_kW:
-      weatherApplied && addedResistanceData?.[key]?.added_power_kW
-        ? addedResistanceData[key].added_power_kW
-        : new Array(fp.length).fill(0),
-  };
-});
+      curvesPayload[key] = {
+        fouled_power: fp,
 
-  try {
-    const response = await fetch("https://da.azolla.sg/vessel/fuel_consumption", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        imo: shipData.imo,
-        curves: curvesPayload,      // <-- the piece that was missing
-      }),
+        added_power_kW:
+          weatherApplied && addedResistanceData?.[key]?.added_power_kW
+            ? addedResistanceData[key].added_power_kW
+            : new Array(fp.length).fill(0),
+      };
     });
-    const data = await response.json();
-    console.log(data);
-    if (data.status === "success") setFuelConsumptionData(data.fuel_consumption_data);
-    else setFuelConsumptionData(null);   // clear stale table on error
-  } catch (err) {
-    console.log(err);
-  }
-};
-useEffect(() => {
-  const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
- if (
-    shipData?.imo &&
-    fouledSource
-) {
-    fetchFuelConsumptionData();
-}
-}, [customFouledCurves, fouledCurves, weatherApplied, addedResistanceData, foulingMode]);
+
+    try {
+      const response = await fetch("https://da.azolla.sg/vessel/fuel_consumption", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imo: shipData.imo,
+          curves: curvesPayload,      // <-- the piece that was missing
+        }),
+      });
+      const data = await response.json();
+      console.log(data);
+      if (data.status === "success") setFuelConsumptionData(data.fuel_consumption_data);
+      else setFuelConsumptionData(null);   // clear stale table on error
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
+    if (
+      shipData?.imo &&
+      fouledSource
+    ) {
+      fetchFuelConsumptionData();
+    }
+  }, [customFouledCurves, fouledCurves, weatherApplied, addedResistanceData, foulingMode]);
   const fuelValues = fuelConsumptionData
     ? Object.values(fuelConsumptionData).flatMap(d => d.fuel_t_per_day)
     : [];
@@ -1360,176 +1371,300 @@ useEffect(() => {
             borderRadius: 12,
           }}
         >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr",
-              gap: 12,
-              alignItems: "center",
-            }}
-          >
 
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 6,
-                  fontSize: 11,
-                  color: C.accent,
-                }}
+          <label style={{ display: "block", marginBottom: 12, fontSize: 11, color: C.accent }}>
+            Added Power
+          </label>
+
+          <div style={{ marginBottom: 16 }}>
+            <select
+              value={addedPowerMode}
+              onChange={(e) => setAddedPowerMode(e.target.value)}
+              style={{
+                width: 220,
+                padding: "10px",
+                borderRadius: 8,
+                background: C.inputBg,
+                border: `1px solid ${C.border}`,
+                color: C.textPrimary,
+              }}
+            >
+              <option value="manual">Manual</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          {addedPowerMode === "manual" && (
+
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr",
+                gap: 12,
+                alignItems: "center",
+              }}
+            >
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.accent,
+                  }}
+                >
+                  Transverse area A_T (m²)
+                </label>
+
+                <input
+                  type="number"
+                  value={areaT}
+                  onChange={(e) => {
+                    setAreaT(e.target.value);
+                    setWeatherApplied(false);        // hide line until re-applied
+                    setAddedResistanceData(null);
+                  }}
+                  placeholder="Enter Area_T"
+                  style={{
+                    width: "100%", padding: "10px", borderRadius: 8,
+                    background: C.inputBg, border: `1px solid ${C.accent}`, color: C.textPrimary,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.textMuted,
+                  }}
+                >
+                  Latitude
+                </label>
+
+                <input
+                  readOnly
+                  value={marineData?.lat || ""}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: C.inputBg,
+                    border: `1px solid ${C.border}`,
+                    color: C.textSecondary,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.textMuted,
+                  }}
+                >
+                  Longitude
+                </label>
+
+                <input
+                  readOnly
+                  value={marineData?.lng || ""}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: C.inputBg,
+                    border: `1px solid ${C.border}`,
+                    color: C.textSecondary,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.accent,
+                    fontWeight: 600,
+                  }}
+                >
+                  Sea State
+                </label>
+
+                <select
+                  value={seaState}
+                  onChange={(e) => setSeaState(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: C.inputBg,
+                    border: `1px solid ${C.accent}`,
+                    color: C.textPrimary,
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="0">0 - Calm (glassy)</option>
+                  <option value="1">1 - Calm (rippled)</option>
+                  <option value="2">2 - Smooth</option>
+                  <option value="3">3 - Slight</option>
+                  <option value="4">4 - Moderate</option>
+                  <option value="5">5 - Rough</option>
+                  <option value="6">6 - Very rough</option>
+                  <option value="7">7 - High</option>
+                  <option value="8">8 - Very high</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.textMuted,
+                  }}
+                >
+                  Course °
+                </label>
+
+                <input
+                  readOnly
+                  value={marineData?.hdg || ""}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: C.inputBg,
+                    border: `1px solid ${C.border}`,
+                    color: C.textSecondary,
+                  }}
+                />
+              </div>
+
+              <button style={{
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: C.accent,
+                border: `1px solid ${C.border}`,
+                color: "#fff",
+                fontSize: 11, cursor: "pointer",
+                marginTop: 16,
+              }}
+                onClick={fetchAddedResistance}
+                disabled={!areaT || !marineData}
               >
-                Transverse area A_T (m²)
-              </label>
+                Apply Weather
+              </button>
 
-              <input
-                type="number"
-                value={areaT}
-                onChange={(e) => {
-                  setAreaT(e.target.value);
-                  setWeatherApplied(false);        // hide line until re-applied
-                  setAddedResistanceData(null);
-                }}
-                placeholder="Enter Area_T"
-                style={{
-                  width: "100%", padding: "10px", borderRadius: 8,
-                  background: C.inputBg, border: `1px solid ${C.accent}`, color: C.textPrimary,
-                }}
-              />
             </div>
+          )}
 
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 6,
-                  fontSize: 11,
-                  color: C.textMuted,
-                }}
-              >
-                Latitude
-              </label>
+          {addedPowerMode === "custom" && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr auto",
+                gap: 12,
+                alignItems: "end",
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.accent,
+                  }}
+                >
+                  Sea State
+                </label>
 
-              <input
-                readOnly
-                value={marineData?.lat || ""}
+                <select
+                  value={seaState}
+                  onChange={(e) => setSeaState(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: C.inputBg,
+                    border: `1px solid ${C.accent}`,
+                    color: C.textPrimary,
+                  }}
+                >
+                  <option value="0">0 - Calm (glassy)</option>
+                  <option value="1">1 - Calm (rippled)</option>
+                  <option value="2">2 - Smooth</option>
+                  <option value="3">3 - Slight</option>
+                  <option value="4">4 - Moderate</option>
+                  <option value="5">5 - Rough</option>
+                  <option value="6">6 - Very rough</option>
+                  <option value="7">7 - High</option>
+                  <option value="8">8 - Very high</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 6,
+                    fontSize: 11,
+                    color: C.accent,
+                  }}
+                >
+                  Weather State
+                </label>
+
+                <select
+                  value={weatherState}
+                  onChange={(e) => setWeatherState(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: C.inputBg,
+                    border: `1px solid ${C.accent}`,
+                    color: C.textPrimary,
+                  }}
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                
+
+                
+                </select>
+              </div>
+
+              <button
+                onClick={fetchAddedResistance}
                 style={{
-                  width: "100%",
-                  padding: "10px",
+                  padding: "10px 12px",
                   borderRadius: 8,
-                  background: C.inputBg,
+                  background: C.accent,
                   border: `1px solid ${C.border}`,
-                  color: C.textSecondary,
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 6,
+                  color: "#fff",
                   fontSize: 11,
-                  color: C.textMuted,
-                }}
-              >
-                Longitude
-              </label>
-
-              <input
-                readOnly
-                value={marineData?.lng || ""}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: 8,
-                  background: C.inputBg,
-                  border: `1px solid ${C.border}`,
-                  color: C.textSecondary,
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 6,
-                  fontSize: 11,
-                  color: C.accent,
-                  fontWeight: 600,
-                }}
-              >
-                Sea State
-              </label>
-
-              <select
-                value={seaState}
-                onChange={(e) => setSeaState(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: 8,
-                  background: C.inputBg,
-                  border: `1px solid ${C.accent}`,
-                  color: C.textPrimary,
-                  fontSize: 12,
                   cursor: "pointer",
                 }}
               >
-                <option value="0">0 - Calm (glassy)</option>
-                <option value="1">1 - Calm (rippled)</option>
-                <option value="2">2 - Smooth</option>
-                <option value="3">3 - Slight</option>
-                <option value="4">4 - Moderate</option>
-                <option value="5">5 - Rough</option>
-                <option value="6">6 - Very rough</option>
-                <option value="7">7 - High</option>
-                <option value="8">8 - Very high</option>
-              </select>
+                Apply Weather
+              </button>
             </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 6,
-                  fontSize: 11,
-                  color: C.textMuted,
-                }}
-              >
-                Course °
-              </label>
-
-              <input
-                readOnly
-                value={marineData?.hdg || ""}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: 8,
-                  background: C.inputBg,
-                  border: `1px solid ${C.border}`,
-                  color: C.textSecondary,
-                }}
-              />
-            </div>
-
-            <button style={{
-              padding: "10px 12px",
-              borderRadius: 8,
-              background: C.accent,
-              border: `1px solid ${C.border}`,
-              color: "#fff",
-              fontSize: 11, cursor: "pointer",
-              marginTop: 16,
-            }}
-              onClick={fetchAddedResistance}
-              disabled={!areaT || !marineData}
-            >
-              Apply Weather
-            </button>
-
-          </div>
+          )}
         </div>
 
         {/* Legend */}
@@ -1639,143 +1774,143 @@ useEffect(() => {
           </div>
         )}
 
-       
+
       </div>
 
-       {fuelConsumptionData && Object.keys(fuelConsumptionData).length > 0 && (
-  <div style={{ marginTop: 24, border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.cardSolid, padding: 16 }}>
+      {fuelConsumptionData && Object.keys(fuelConsumptionData).length > 0 && (
+        <div style={{ marginTop: 24, border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.cardSolid, padding: 16 }}>
 
-    {/* Header row: title + caption + unit toggle */}
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
-          Fuel Consumption {fuelUnit === "usd" ? "($/day)" : "(t/day)"}
-        </div>
-        <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
-{        weatherApplied ? "On final power - includes Fouling + Weather" : "On final power - includes Fouling"
-}        </div>
-      </div>
+          {/* Header row: title + caption + unit toggle */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
+                Fuel Consumption {fuelUnit === "usd" ? "($/day)" : "(t/day)"}
+              </div>
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                {weatherApplied ? "On final power - includes Fouling + Weather" : "On final power - includes Fouling"
+                }        </div>
+            </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {fuelUnit === "usd" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 11, color: C.textMuted }}>Bunker $/t</span>
-            <input
-              type="number"
-              value={bunkerPrice}
-              onChange={(e) => setBunkerPrice(e.target.value)}
-              style={{ width: 70, padding: "5px 8px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {fuelUnit === "usd" && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11, color: C.textMuted }}>Bunker $/t</span>
+                  <input
+                    type="number"
+                    value={bunkerPrice}
+                    onChange={(e) => setBunkerPrice(e.target.value)}
+                    style={{ width: 70, padding: "5px 8px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}
+                  />
+                </div>
+              )}
+              <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+                {["tpd", "usd"].map((u) => (
+                  <span
+                    key={u}
+                    onClick={() => setFuelUnit(u)}
+                    style={{
+                      padding: "6px 14px", fontSize: 11, cursor: "pointer",
+                      background: fuelUnit === u ? C.accentDim : "transparent",
+                      color: fuelUnit === u ? C.accent : C.textSecondary,
+                    }}
+                  >
+                    {u === "tpd" ? "t/day" : "$/day"}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
-        <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
-          {["tpd", "usd"].map((u) => (
-            <span
-              key={u}
-              onClick={() => setFuelUnit(u)}
-              style={{
-                padding: "6px 14px", fontSize: 11, cursor: "pointer",
-                background: fuelUnit === u ? C.accentDim : "transparent",
-                color: fuelUnit === u ? C.accent : C.textSecondary,
-              }}
-            >
-              {u === "tpd" ? "t/day" : "$/day"}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
 
-    {/* Table */}
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-        <thead>
-          <tr>
-              <th
-  style={{
-    position: "relative",
-    border: "1px solid #444",
-    background: "#1f2937",
-    width: "80px",
-    minWidth: "80px",
-    height: "70px",
-    padding: 0,
-  }}
->
-  
-  <div
-    style={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      background:
-        "linear-gradient(to bottom left, transparent 49%, #888 50%, transparent 51%)",
-    }}
-  />
+          {/* Table */}
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      position: "relative",
+                      border: "1px solid #444",
+                      background: "#1f2937",
+                      width: "80px",
+                      minWidth: "80px",
+                      height: "70px",
+                      padding: 0,
+                    }}
+                  >
 
- 
-  <span
-    style={{
-      position: "absolute",
-      top: "8px",
-      right: "10px",
-      fontWeight: 600,
-      color: C.accent,
-    }}
-  >
-    Speed
-  </span>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        background:
+                          "linear-gradient(to bottom left, transparent 49%, #888 50%, transparent 51%)",
+                      }}
+                    />
 
- 
-  <span
-    style={{
-      position: "absolute",
-      bottom: "8px",
-      left: "10px",
-      fontWeight: 600,
-      color: C.accent,
-    }}
-  >
-    Draught
-  </span>
-</th>
-            {fuelConsumptionData[Object.keys(fuelConsumptionData)[0]].speed.map((speed) => (
-              <th key={speed} style={{ padding: "10px 12px", background: C.statBg, textAlign: "center", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
-                {speed.toFixed(1)}
-              </th>
+
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "8px",
+                        right: "10px",
+                        fontWeight: 600,
+                        color: C.accent,
+                      }}
+                    >
+                      Speed
+                    </span>
+
+
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        left: "10px",
+                        fontWeight: 600,
+                        color: C.accent,
+                      }}
+                    >
+                      Draught
+                    </span>
+                  </th>
+                  {fuelConsumptionData[Object.keys(fuelConsumptionData)[0]].speed.map((speed) => (
+                    <th key={speed} style={{ padding: "10px 12px", background: C.statBg, textAlign: "center", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
+                      {speed.toFixed(1)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(fuelConsumptionData).map(([key, d]) => (
+                  <tr key={key}>
+                    <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.statBg, padding: "10px 12px", fontWeight: 600, color: C.accent, border: `1px solid ${C.borderSubtle}` }}>
+                      {d.draught} m
+                    </td>
+                    {d.fuel_t_per_day.map((fuel, i) => (
+                      <td key={i} style={{ padding: "10px 12px", textAlign: "center", border: `1px solid ${C.borderSubtle}`, ...fuelCellStyle(fuel) }}>
+                        {fmtCell(fuel)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend */}
+          <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, color: C.textMuted }}>
+            {[["rgba(16,185,129,0.4)", "lower"], ["rgba(245,158,11,0.4)", "mid"], ["rgba(239,68,68,0.4)", "higher"]].map(([c, l]) => (
+              <span key={l}>
+                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: c, verticalAlign: "middle", marginRight: 5 }} />
+                {l}
+              </span>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(fuelConsumptionData).map(([key, d]) => (
-            <tr key={key}>
-              <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.statBg, padding: "10px 12px", fontWeight: 600, color: C.accent, border: `1px solid ${C.borderSubtle}` }}>
-                {d.draught} m
-              </td>
-              {d.fuel_t_per_day.map((fuel, i) => (
-                <td key={i} style={{ padding: "10px 12px", textAlign: "center", border: `1px solid ${C.borderSubtle}`, ...fuelCellStyle(fuel) }}>
-                  {fmtCell(fuel)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-
-    {/* Legend */}
-    <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, color: C.textMuted }}>
-      {[["rgba(16,185,129,0.4)", "lower"], ["rgba(245,158,11,0.4)", "mid"], ["rgba(239,68,68,0.4)", "higher"]].map(([c, l]) => (
-        <span key={l}>
-          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: c, verticalAlign: "middle", marginRight: 5 }} />
-          {l}
-        </span>
-      ))}
-    </div>
-  </div>
-)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
