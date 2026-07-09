@@ -1879,7 +1879,7 @@ function DashboardTab({
                           background: `
 linear-gradient(
   to bottom left,
-  #162235 49.5%,
+  #28415E 49.5%,
   #4AA3FF 50%,
   #28415E 50.5%
 )
@@ -1894,7 +1894,7 @@ linear-gradient(
                           top: "8px",
                           right: "10px",
                           fontWeight: 600,
-                          color: C.accent,
+                          color: "black",
                         }}
                       >
                         Speed
