@@ -731,7 +731,7 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
 
         const response = await fetch(
 
-          `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&ship_course_deg=${marineData.hdg}&sea_state=${seaState}&weather_state=${weatherState}`
+          `https://da.azolla.sg/vessel/added_resistance?imo=${imo}&lat=${marineData.lat}&lon=${marineData.lng}&sea_state=${seaState}&weather_state=${weatherState}`
 
 
         );
@@ -1939,14 +1939,14 @@ linear-gradient(
             </div>
 
             {/* Legend */}
-            <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, color: C.textMuted }}>
+            {/* <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, color: C.textMuted }}>
               {[["rgba(16,185,129,0.4)", "lower"], ["rgba(245,158,11,0.4)", "mid"], ["rgba(239,68,68,0.4)", "higher"]].map(([c, l]) => (
                 <span key={l}>
                   <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: c, verticalAlign: "middle", marginRight: 5 }} />
                   {l}
                 </span>
               ))}
-            </div>
+            </div> */}
           </div>
         )}
 
