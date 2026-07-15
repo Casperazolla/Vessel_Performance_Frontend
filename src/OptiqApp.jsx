@@ -746,6 +746,14 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
 
         }
 
+
+        if (data.status === "success") {
+    setAddedResistanceData(data.added_power_data);
+    setWeatherApplied(true);
+
+   
+}
+
         return;
 
       }
@@ -1076,7 +1084,7 @@ function DashboardTab({
   const sortedKeys = [...draughtKeys].sort(
     (a, b) => (curves[a]?.draught ?? 0) - (curves[b]?.draught ?? 0)
   );
-  const lowKey = sortedKeys[0];                                   // left plot: always lowest
+  const lowKey = sortedKeys[2];                                   // left plot: always lowest
   const highDefaultKey = sortedKeys[sortedKeys.length - 1];       // right plot default: highest
   const rightKey = selectedDraught || highDefaultKey;            // right plot: user-selectable
   // shared Y max across both displayed charts (for the lock toggle)
@@ -1216,26 +1224,43 @@ function DashboardTab({
   const fetchFuelConsumptionData = async () => {
 
 
-    // the fouled curves currently in view (custom or image-based)
-    const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
-    if (!fouledSource) return;
+    const cleanCurves = shipData?.draught_curves || {};
 
-    const curvesPayload = {};
+const fouledSource =
+  foulingMode === "custom"
+    ? customFouledCurves
+    : fouledCurves;
 
-    Object.keys(fouledSource).forEach((key) => {
-      const fp = fouledSource[key]?.fouled_power;
+   const curvesPayload = {};
 
-      if (!fp) return;
+Object.keys(cleanCurves).forEach((key) => {
 
-      curvesPayload[key] = {
-        fouled_power: fp,
+  const clean = cleanCurves[key];
 
-        added_power_kW:
-          weatherApplied && addedResistanceData?.[key]?.added_power_kW
-            ? addedResistanceData[key].added_power_kW
-            : new Array(fp.length).fill(0),
-      };
-    });
+  const brakePower = clean.brake_power;
+
+const fouledPower =
+  fouledSource?.[key]?.fouled_power ??
+  new Array(brakePower.length).fill(0);
+
+ const addedPower =
+  weatherApplied && addedResistanceData?.[key]?.added_power_kW
+    ? addedResistanceData[key].added_power_kW
+    : new Array(brakePower.length).fill(0);
+curvesPayload[key] = {
+  draught: clean.draught,
+  speed: clean.speed,
+  brake_power: brakePower,
+  fouled_power:
+    fouledSource?.[key]?.fouled_power ??
+    new Array(brakePower.length).fill(0),
+  added_power_kW:
+    weatherApplied && addedResistanceData?.[key]?.added_power_kW
+      ? addedResistanceData[key].added_power_kW
+      : new Array(brakePower.length).fill(0),
+};
+
+});
 
     try {
       const response = await fetch("https://da.azolla.sg/vessel/fuel_consumption", {
@@ -1254,15 +1279,20 @@ function DashboardTab({
       console.log(err);
     }
   };
-  useEffect(() => {
-    const fouledSource = foulingMode === "custom" ? customFouledCurves : fouledCurves;
-    if (
-      shipData?.imo &&
-      fouledSource
-    ) {
-      fetchFuelConsumptionData();
-    }
-  }, [customFouledCurves, fouledCurves, weatherApplied, addedResistanceData, foulingMode]);
+ useEffect(() => {
+
+  if (shipData?.imo && shipData?.draught_curves) {
+    fetchFuelConsumptionData();
+  }
+
+}, [
+  shipData,
+  customFouledCurves,
+  fouledCurves,
+  weatherApplied,
+  addedResistanceData,
+  foulingMode,
+]);
   const fuelValues = fuelConsumptionData
     ? Object.values(fuelConsumptionData).flatMap(d => d.fuel_t_per_day)
     : [];
@@ -1733,7 +1763,7 @@ function DashboardTab({
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, height: 34 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
-                Lowest draught
+                Draught - 
               </span>
               <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: C.accentDim, border: `1px solid ${C.border}`, color: C.accent }}>
                 {lowKey ? `${curves[lowKey].draught} m` : "—"}
@@ -1922,18 +1952,37 @@ linear-gradient(
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(fuelConsumptionData).map(([key, d]) => (
-                    <tr key={key}>
-                      <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.statBg, padding: "10px 12px", fontWeight: 600, color: C.accent, border: `1px solid ${C.borderSubtle}` }}>
-                        {d.draught} m
-                      </td>
-                      {d.fuel_t_per_day.map((fuel, i) => (
-                        <td key={i} style={{ padding: "10px 12px", textAlign: "center", border: `1px solid ${C.borderSubtle}`, background: C.petrol, color: C.centregrey }}>
-                          {fmtCell(fuel)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                {Object.entries(fuelConsumptionData)
+  .filter(([_, draughtData]) => Number(draughtData.draught) > 4)
+  .map(([key, draughtData]) => (
+    <tr key={key}>
+      <td
+        style={{
+          padding: "10px",
+          textAlign: "center",
+          color: C.accent,
+          fontWeight: 600,
+          border: `1px solid ${C.borderSubtle}`,
+        }}
+      >
+        {draughtData.draught.toFixed(2)}
+      </td>
+
+      {draughtData.fuel_t_per_day.map((fuel, index) => (
+        <td
+          key={index}
+          style={{
+            padding: "10px",
+            textAlign: "center",
+            border: `1px solid ${C.borderSubtle}`,
+            color: C.textSecondary,
+          }}
+        >
+          {fuel.toFixed(3)}
+        </td>
+      ))}
+    </tr>
+  ))}
                 </tbody>
               </table>
             </div>
