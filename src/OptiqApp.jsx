@@ -1889,13 +1889,15 @@ curvesPayload[key] = {
                   <tr>
                     <th
                       style={{
-                        position: "relative",
+                        position: "sticky",
                         border: "1px solid #444",
                         background: "#1f2937",
                         width: "80px",
                         minWidth: "80px",
                         height: "70px",
                         padding: 0,
+                        left:0,
+                        zIndex: 0,
                       }}
                     >
 
@@ -1963,6 +1965,10 @@ linear-gradient(
           color: C.accent,
           fontWeight: 600,
           border: `1px solid ${C.borderSubtle}`,
+          position: "sticky",
+          left: 0,
+          background: C.cardSolid,
+          zIndex: 0,
         }}
       >
         {draughtData.draught.toFixed(2)}
