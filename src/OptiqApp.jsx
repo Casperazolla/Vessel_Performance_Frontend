@@ -1847,9 +1847,17 @@ curvesPayload[key] = {
                 <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
                   Fuel Consumption {fuelUnit === "usd" ? "($/day)" : "(t/day)"}
                 </div>
-                <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
-                  {weatherApplied ? "On final power - includes Fouling + Weather" : "On final power - includes Fouling"
-                  }        </div>
+               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+  {(() => {
+    if (weatherApplied) {
+      return "On final power - includes Fouling + Weather";
+    } else if (fouledCurves || customFouledCurves) {
+      return "On final power - includes Fouling";
+    } else {
+      return "On final power";
+    }
+  })()}
+</div>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
