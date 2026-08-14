@@ -1042,6 +1042,7 @@ function DashboardTab({
   const [hoverRight, setHoverRight] = useState(null); // hovered speed on right chart
   const [selectedDraught, setSelectedDraught] = useState(null);
   const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
+   const [hoverSpeed, setHoverSpeed]           = useState(null); 
   // const [selectedDraught, setSelectedDraught] = useState(null);
   // const [fuelConsumptionData, setFuelConsumptionData] = useState(null);
   const [fuelUnit, setFuelUnit] = useState("tpd");        // "tpd" | "usd"
@@ -1104,33 +1105,50 @@ function DashboardTab({
   };
   const sharedMax = Math.ceil((Math.max(maxOfKey(lowKey), maxOfKey(rightKey)) + 500) / 500) * 500;
   const rightMax = Math.ceil((maxOfKey(rightKey) + 500) / 500) * 500;
-  // headline delta (penalty) at the top speed point, for a given key
-  // delta (penalty) at a given speed (or top speed if none hovered), for a given key
-  const deltaSummary = (key, atSpeed = null) => {
-    const c = curves[key];
-    if (!c) return null;
-    const added = addedResistanceData?.[key];
-    const hasW = weatherApplied && !!added?.added_power_kW;
-    const hasF = !!c.fouled_power;
-    if (!hasF && !hasW) return null;
+ const deltaSummary = (key, atSpeed = null) => {
+  if (atSpeed == null) return null;
 
-    // pick index: nearest to hovered speed, else last (top speed)
-    let i = c.speed.length - 1;
-    if (atSpeed != null) {
-      let best = Infinity;
-      c.speed.forEach((s, idx) => {
-        const d = Math.abs(s - atSpeed);
-        if (d < best) { best = d; i = idx; }
-      });
+  const c = curves[key];
+  if (!c) return null;
+
+  const added = addedResistanceData?.[key];
+  const hasW = weatherApplied && !!added?.added_power_kW;
+  const hasF = !!c.fouled_power;
+
+  if (!hasF && !hasW) return null;
+
+  let i = 0;
+  let best = Infinity;
+
+  c.speed.forEach((s, idx) => {
+    const d = Math.abs(s - atSpeed);
+    if (d < best) {
+      best = d;
+      i = idx;
     }
+  });
 
-    const spd = Math.round(c.speed[i] * 10) / 10;
-    const brake = Math.round(c.brake_power[i]);
-    const fouled = hasF ? Math.round(c.fouled_power[i]) : brake;
-    const top = hasW ? Math.round(fouled + (added.added_power_kW[i] || 0)) : fouled;
-    const pct = brake > 0 ? Math.round(((top - brake) / brake) * 1000) / 10 : 0;
-    return { spd, delta: top - brake, top, brake, pct, hovered: atSpeed != null };
+  const spd = Math.round(c.speed[i] * 10) / 10;
+  const brake = Math.round(c.brake_power[i]);
+  const fouled = hasF ? Math.round(c.fouled_power[i]) : brake;
+  const top = hasW
+    ? Math.round(fouled + (added.added_power_kW[i] || 0))
+    : fouled;
+
+  const pct =
+    brake > 0
+      ? Math.round(((top - brake) / brake) * 1000) / 10
+      : 0;
+
+  return {
+    spd,
+    delta: top - brake,
+    top,
+    brake,
+    pct,
+    hovered: true
   };
+};
   const anyWeather = weatherApplied && !!addedResistanceData;
 
   // build the recharts rows for a given draught key
@@ -1747,6 +1765,9 @@ curvesPayload[key] = {
             </span>
           )}
 
+
+          
+
           {anyWeather && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 20, height: 2, background: "#fbbf24", display: "inline-block" }} />
@@ -1770,18 +1791,27 @@ curvesPayload[key] = {
               </span>
             </div>
             {renderPowerChart(lowKey, setHoverLow, rightMax)}
-            {(() => {
-              const d = deltaSummary(lowKey, hoverLow);
-              return d ? (
-                <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
-                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>
-                  {!d.hovered && <span style={{ color: C.textMuted }}> (max — hover to scan)</span>}:{" "}
-                  <span style={{ color: C.critical, fontWeight: 700 }}>+{d.delta.toLocaleString()} kW</span>{" "}
-                  <span style={{ color: C.warning, fontWeight: 600 }}>(+{d.pct}%)</span>{" "}
-                  <span style={{ color: C.textMuted }}>{d.brake.toLocaleString()} → {d.top.toLocaleString()} kW</span>
-                </div>
-              ) : null;
-            })()}
+           {(() => {
+  const d = deltaSummary(lowKey, hoverLow);
+
+  return d ? (
+    <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
+      Penalty at{" "}
+      <span style={{ color: C.textPrimary, fontWeight: 600 }}>
+        {d.spd} kn
+      </span>{" "}
+      <span style={{ color: C.critical, fontWeight: 700 }}>
+        +{d.delta.toLocaleString()} kW
+      </span>{" "}
+      <span style={{ color: C.warning, fontWeight: 600 }}>
+        (+{d.pct}%)
+      </span>{" "}
+      <span style={{ color: C.textMuted }}>
+        {d.brake.toLocaleString()} → {d.top.toLocaleString()} kW
+      </span>
+    </div>
+  ) : null;
+})()}
           </div>
 
           {/* Right — selectable draught (default highest) */}
@@ -1804,21 +1834,32 @@ curvesPayload[key] = {
               )}
             </div>
             {renderPowerChart(rightKey, setHoverRight)}
-            {(() => {
-              const d = deltaSummary(rightKey, hoverRight);
-              return d ? (
-                <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
-                  Penalty at <span style={{ color: C.textPrimary, fontWeight: 600 }}>{d.spd} kn</span>
-                  {!d.hovered && <span style={{ color: C.textMuted }}> (max — hover to scan)</span>}:{" "}
-                  <span style={{ color: C.critical, fontWeight: 700 }}>+{d.delta.toLocaleString()} kW</span>{" "}
-                  <span style={{ color: C.warning, fontWeight: 600 }}>(+{d.pct}%)</span>{" "}
-                  <span style={{ color: C.textMuted }}>{d.brake.toLocaleString()} → {d.top.toLocaleString()} kW</span>
-                </div>
-              ) : null;
-            })()}
+           {(() => {
+  const d = deltaSummary(rightKey, hoverRight);
+
+  return d ? (
+    <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
+      Penalty at{" "}
+      <span style={{ color: C.textPrimary, fontWeight: 600 }}>
+        {d.spd} kn
+      </span>{" "}
+      <span style={{ color: C.critical, fontWeight: 700 }}>
+        +{d.delta.toLocaleString()} kW
+      </span>{" "}
+      <span style={{ color: C.warning, fontWeight: 600 }}>
+        (+{d.pct}%)
+      </span>{" "}
+      <span style={{ color: C.textMuted }}>
+        {d.brake.toLocaleString()} → {d.top.toLocaleString()} kW
+      </span>
+    </div>
+  ) : null;
+})()}
           </div>
         </div>
 
+
+            
 
         {/* Penalty summary bar */}
         {displayedPenalty !== null && (
