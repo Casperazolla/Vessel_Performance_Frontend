@@ -292,6 +292,9 @@ function LandingPage({ onEnter, onLogout }) {
   const [imo, setImo] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState("single");
+  const [fleetImos, setFleetImos] = useState([]);
+  const [showFleetModal, setShowFleetModal] = useState(false);
   const isMobile = useMediaQuery(768);
 
   const modules = [
@@ -313,17 +316,47 @@ function LandingPage({ onEnter, onLogout }) {
   ];
 
 
-  const handleAnalyze = async (e) => {
-    e?.preventDefault();
+  const isValidImo = (value) => /^\d{7}$/.test((value || "").trim());
 
+  const addFleetImo = () => {
+    const nextImo = imo.trim();
 
-
-    if (!imo || !imo.trim()) {
+    if (!nextImo) {
       setErr("IMO number is required");
       return;
     }
 
-    if (!/^\d{7}$/.test(imo.trim())) {
+    if (!isValidImo(nextImo)) {
+      setErr("IMO must be exactly 7 digits");
+      return;
+    }
+
+    if (fleetImos.includes(nextImo)) {
+      setErr("IMO already added to fleet");
+      return;
+    }
+
+    setFleetImos((prev) => [...prev, nextImo]);
+    setImo("");
+    setErr("");
+  };
+
+  const handleAnalyze = async (e) => {
+    e?.preventDefault();
+
+    const targetImo = analysisMode === "fleet" ? fleetImos[0] : imo.trim();
+
+    if (analysisMode === "fleet" && fleetImos.length === 0) {
+      setErr("Add at least one IMO for fleet analysis");
+      return;
+    }
+
+    if (!targetImo) {
+      setErr("IMO number is required");
+      return;
+    }
+
+    if (!isValidImo(targetImo)) {
       setErr("IMO must be exactly 7 digits");
       return;
     }
@@ -335,7 +368,7 @@ function LandingPage({ onEnter, onLogout }) {
 
 
       const formdata = new FormData();
-      formdata.append("text_input", imo.trim());
+      formdata.append("text_input", targetImo);
 
       const response = await fetch(
         "https://da.azolla.sg/Vessel_Performance_Project/run",
@@ -351,7 +384,7 @@ function LandingPage({ onEnter, onLogout }) {
 
 
       if (result.status === "success") {
-        onEnter(imo.trim(), result);
+        onEnter(targetImo, result);
       } else {
         setErr("Analysis failed");
       }
@@ -458,18 +491,58 @@ function LandingPage({ onEnter, onLogout }) {
             borderRadius: 16,
             backdropFilter: "blur(20px)",
             animation: "slideUp 0.6s 0.15s both",
+            position: "relative",
           }}>
             {/* Card header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2">
-                <rect x="2" y="2" width="7" height="7" rx="1" />
-                <rect x="15" y="2" width="7" height="7" rx="1" />
-                <rect x="2" y="15" width="7" height="7" rx="1" />
-                <path d="M15 15h7v7" />
-              </svg>
-              <span style={{ fontSize: 17, fontWeight: 700, color: C.textPrimary, fontFamily: "'Aeonik',sans-serif" }}>
-                Access Detailed Performance Analysis
-              </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2">
+                  <rect x="2" y="2" width="7" height="7" rx="1" />
+                  <rect x="15" y="2" width="7" height="7" rx="1" />
+                  <rect x="2" y="15" width="7" height="7" rx="1" />
+                  <path d="M15 15h7v7" />
+                </svg>
+                <span style={{ fontSize: 17, fontWeight: 700, color: C.textPrimary, fontFamily: "'Aeonik',sans-serif" }}>
+                  Detailed Performance Analysis
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => { setAnalysisMode("single"); setErr(""); }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 9,
+                    border: `1px solid ${analysisMode === "single" ? C.accent : C.border}`,
+                    background: analysisMode === "single" ? C.accentDim : "rgba(5,15,35,0.35)",
+                    color: analysisMode === "single" ? C.accent : C.textSecondary,
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  SINGLE VESSEL ANALYSIS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAnalysisMode("fleet"); setErr(""); }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 9,
+                    border: `1px solid ${analysisMode === "fleet" ? C.accent : C.border}`,
+                    background: analysisMode === "fleet" ? C.accentDim : "rgba(5,15,35,0.35)",
+                    color: analysisMode === "fleet" ? C.accent : C.textSecondary,
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  FLEET ANALYSIS
+                </button>
+              </div>
             </div>
             <div style={{ height: 1, background: C.borderSubtle, margin: "16px 0 22px" }} />
 
@@ -478,7 +551,11 @@ function LandingPage({ onEnter, onLogout }) {
               type="text" maxLength={7}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  handleAnalyze();
+                  if (analysisMode === "fleet") {
+                    addFleetImo();
+                  } else {
+                    handleAnalyze();
+                  }
                 }
               }}
               placeholder="e.g 9483451"
@@ -494,16 +571,67 @@ function LandingPage({ onEnter, onLogout }) {
             />
             {err && <p style={{ margin: "0 0 14px", fontSize: 12, color: "#f87171" }}>{err}</p>}
 
+            {analysisMode === "fleet" && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <button
+                    type="button"
+                    onClick={addFleetImo}
+                    disabled={!isValidImo(imo) || loading}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: (!isValidImo(imo) || loading) ? "rgba(14,165,233,0.4)" : C.accentBtn,
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: (!isValidImo(imo) || loading) ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Add IMO
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowFleetModal(true)}
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 8,
+                      border: `1px solid ${C.border}`,
+                      background: "rgba(5,15,35,0.45)",
+                      color: C.accent,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    title="View added IMOs"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+
+                  <span style={{ fontSize: 12, color: C.textMuted }}>
+                    Added: {fleetImos.length}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={handleAnalyze}
-              disabled={loading}
+              disabled={loading || (analysisMode === "fleet" && fleetImos.length === 0)}
               style={{
                 width: "100%", padding: "15px",
                 background: loading ? "rgba(14,165,233,0.4)" : C.accentBtn,
                 color: "#fff", border: "none", borderRadius: 10,
                 fontSize: 13, fontWeight: 700, letterSpacing: "0.1em",
-                textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer",
+                textTransform: "uppercase", cursor: (loading || (analysisMode === "fleet" && fleetImos.length === 0)) ? "not-allowed" : "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 transition: "all .25s", marginBottom: 20,
               }}
@@ -532,6 +660,78 @@ function LandingPage({ onEnter, onLogout }) {
                 Need assistance?
               </a>
             </div>
+
+            {showFleetModal && (
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(2,8,23,0.72)",
+                borderRadius: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 5,
+                padding: 16,
+              }}>
+                <div style={{
+                  width: "100%",
+                  maxWidth: 340,
+                  background: C.cardSolid,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "10px 12px",
+                    borderBottom: `1px solid ${C.borderSubtle}`,
+                  }}>
+                    <span style={{ fontSize: 12, color: C.textPrimary, fontWeight: 700 }}>Fleet IMO List</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowFleetModal(false)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: C.textMuted,
+                        fontSize: 16,
+                        cursor: "pointer",
+                        lineHeight: 1,
+                      }}
+                    >
+                      x
+                    </button>
+                  </div>
+
+                  <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: "left", padding: "8px 12px", color: C.textMuted, borderBottom: `1px solid ${C.borderSubtle}` }}>#</th>
+                          <th style={{ textAlign: "left", padding: "8px 12px", color: C.textMuted, borderBottom: `1px solid ${C.borderSubtle}` }}>IMO</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fleetImos.length === 0 ? (
+                          <tr>
+                            <td colSpan={2} style={{ padding: "12px", color: C.textMuted }}>No IMOs added yet.</td>
+                          </tr>
+                        ) : (
+                          fleetImos.map((fleetImo, idx) => (
+                            <tr key={`${fleetImo}-${idx}`}>
+                              <td style={{ padding: "8px 12px", color: C.textSecondary, borderBottom: `1px solid ${C.borderSubtle}` }}>{idx + 1}</td>
+                              <td style={{ padding: "8px 12px", color: C.textPrimary, borderBottom: `1px solid ${C.borderSubtle}` }}>{fleetImo}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
