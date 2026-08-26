@@ -344,12 +344,38 @@ function LandingPage({ onEnter, onLogout }) {
   const handleAnalyze = async (e) => {
     e?.preventDefault();
 
-    const targetImo = analysisMode === "fleet" ? fleetImos[0] : imo.trim();
-
-    if (analysisMode === "fleet" && fleetImos.length === 0) {
-      setErr("Add at least one IMO for fleet analysis");
+    // ---------- FLEET MODE ----------
+    if (analysisMode === "fleet") {
+      if (fleetImos.length === 0) {
+        setErr("Add at least one IMO for fleet analysis");
+        return;
+      }
+      setErr("");
+      setLoading(true);
+      try {
+        const results = await Promise.all(
+          fleetImos.map(async (fleetImo) => {
+            const formdata = new FormData();
+            formdata.append("text_input", fleetImo);
+            const res = await fetch(
+              "https://da.azolla.sg/Vessel_Performance_Project/run",
+              { method: "POST", body: formdata }
+            );
+            const json = await res.json();
+            return { imo: fleetImo, status: json.status, data: json };
+          })
+        );
+        onEnter(fleetImos, results, "fleet");   // array + results + mode
+      } catch (error) {
+        console.error(error);
+        setErr("Server error");
+      }
+      setLoading(false);
       return;
     }
+
+    // ---------- SINGLE MODE ----------
+    const targetImo = imo.trim();
 
     if (!targetImo) {
       setErr("IMO number is required");
@@ -365,7 +391,6 @@ function LandingPage({ onEnter, onLogout }) {
     setLoading(true);
 
     try {
-
 
       const formdata = new FormData();
       formdata.append("text_input", targetImo);
@@ -384,7 +409,7 @@ function LandingPage({ onEnter, onLogout }) {
 
 
       if (result.status === "success") {
-        onEnter(targetImo, result);
+        onEnter(targetImo, result, "single");   // pass mode explicitly
       } else {
         setErr("Analysis failed");
       }
@@ -638,7 +663,7 @@ function LandingPage({ onEnter, onLogout }) {
             >
               {loading ? (
                 <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> Analyzing…</>
-              ) : "ANALYZE VESSEL"}
+              ) : (analysisMode === "fleet" ? "ANALYZE FLEET" : "ANALYZE VESSEL")}
             </button>
 
             <div style={{ textAlign: "center" }}>
@@ -3431,16 +3456,160 @@ function ReportsTab({ isMobile, imo, shipData }) {
 }
 
 
+// =====================================================================
+//  FLEET DASHBOARD — standalone, dashboard-only page for fleet mode.
+//  No sidebar nav, no Hull/ESD/Reports tabs. Renders one summary + one
+//  card (with a clean-hull speed-power mini chart) per vessel.
+// =====================================================================
+function FleetDashboard({ fleet, results, onBack, onLogout }) {
+  const isMobile = useMediaQuery(768);
+  const list = Array.isArray(results) ? results : [];
+  const ok = list.filter(r => r.status === "success");
+  const failed = list.filter(r => r.status !== "success");
+
+  const summary = [
+    { label: "FLEET SIZE", value: list.length, color: C.accent },
+    { label: "ANALYZED", value: ok.length, color: C.success },
+    { label: "FAILED", value: failed.length, color: failed.length ? C.critical : C.textMuted },
+  ];
+
+  // highest-draught clean curve for each vessel's mini chart
+  const miniData = (data) => {
+    const curves = data?.draught_curves || {};
+    const keys = Object.keys(curves).sort(
+      (a, b) => (curves[a]?.draught ?? 0) - (curves[b]?.draught ?? 0)
+    );
+    const c = curves[keys[keys.length - 1]];
+    if (!c || !Array.isArray(c.speed)) return [];
+    return c.speed.map((s, i) => ({
+      speed: Math.round(s * 10) / 10,
+      power: Math.round(c.brake_power[i]),
+    }));
+  };
+
+  const btn = {
+    padding: "8px 14px", borderRadius: 8, fontSize: 12, cursor: "pointer",
+    display: "flex", alignItems: "center", gap: 6,
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: C.mainBg }}>
+
+      {/* Top bar — no nav tabs, dashboard only */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: isMobile ? "14px 16px" : "16px 28px",
+        background: C.sidebarBg, borderBottom: `1px solid ${C.borderSubtle}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Logo small />
+          <div style={{ borderLeft: `1px solid ${C.borderSubtle}`, paddingLeft: 12 }}>
+            <div style={{ fontSize: 14, color: C.textPrimary, fontWeight: 600 }}>Fleet Analysis</div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>{list.length} vessels</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onBack} style={{ ...btn, background: "rgba(255,255,255,0.04)", border: `1px solid ${C.borderSubtle}`, color: C.textMuted }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
+            New Analysis
+          </button>
+          <button onClick={onLogout} style={{ ...btn, background: "rgba(239,68,68,0.07)", border: `1px solid rgba(239,68,68,0.2)`, color: "#f87171" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{
+        flex: 1, overflow: "auto",
+        padding: isMobile ? "16px" : "24px 28px",
+        display: "flex", flexDirection: "column", gap: 20,
+      }}>
+
+        {/* Summary tiles */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr 1fr" : "repeat(3, 200px)", gap: 12 }}>
+          {summary.map((s, i) => (
+            <div key={i} style={{ background: C.statBg, border: `1px solid ${C.borderCard}`, borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: "0.08em" }}>{s.label}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Vessel cards */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+          {list.map((r, i) => {
+            const data = r.data || {};
+            const isFailed = r.status !== "success";
+            const chart = isFailed ? [] : miniData(data);
+            return (
+              <div key={r.imo || i} style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 13, color: C.textPrimary, fontWeight: 700 }}>IMO {r.imo}</div>
+                    <div style={{ fontSize: 11, color: isFailed ? C.critical : C.success }}>
+                      {isFailed ? "Analysis failed" : "Analyzed"}
+                    </div>
+                  </div>
+                  {data.pdf_url && (
+                    <a href={data.pdf_url} target="_blank" rel="noopener noreferrer"
+                      style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, color: C.textSecondary, fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                      PDF
+                    </a>
+                  )}
+                </div>
+
+                {chart.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={140}>
+                    <LineChart data={chart} margin={{ top: 6, right: 6, bottom: 0, left: -18 }}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 3" vertical={false} />
+                      <XAxis dataKey="speed" tick={{ fontSize: 9, fill: C.textMuted }} />
+                      <YAxis tick={{ fontSize: 9, fill: C.textMuted }} width={44} />
+                      <Tooltip
+                        contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
+                        labelFormatter={v => `${v} kn`}
+                        formatter={v => [`${v.toLocaleString()} kW`, "Clean Hull"]}
+                      />
+                      <Line type="monotone" dataKey="power" stroke={C.accent} strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 12, border: `1px dashed ${C.border}`, borderRadius: 10 }}>
+                    No curve data
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 const INACTIVITY_TIMEOUT = 10 * 60 * 1500;
 
 export default function App() {
-  // Persist login + IMO + shipData across reloads
+  // Persist login + IMO + shipData + mode across reloads
   const [page, setPage] = useState(() => {
     if (!localStorage.getItem("token")) return "login";
     if (localStorage.getItem("imo") && localStorage.getItem("shipData")) return "dashboard";
     return "landing";
   });
-  const [imo, setImo] = useState(() => localStorage.getItem("imo") || "");
+
+  const [mode, setMode] = useState(() => localStorage.getItem("mode") || "single");
+
+  // imo is a string in single mode and an array in fleet mode → stored as JSON.
+  // The catch handles back-compat with older builds that stored a raw string.
+  const [imo, setImo] = useState(() => {
+    const saved = localStorage.getItem("imo");
+    if (!saved) return "";
+    try { return JSON.parse(saved); } catch { return saved; }
+  });
+
   const [shipData, setShipData] = useState(() => {
     try {
       const saved = localStorage.getItem("shipData");
@@ -3454,9 +3623,11 @@ export default function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("imo");
     localStorage.removeItem("shipData");
+    localStorage.removeItem("mode");
     localStorage.removeItem("lastActivity");
     setImo("");
     setShipData(null);
+    setMode("single");
     setPage("login");
   };
 
@@ -3497,19 +3668,23 @@ export default function App() {
     };
   }, []);
 
-  const handleEnter = (id, data) => {
-    localStorage.setItem("imo", id);
+  const handleEnter = (id, data, selectedMode = "single") => {
+    localStorage.setItem("imo", JSON.stringify(id));   // id: string (single) or array (fleet)
     localStorage.setItem("shipData", JSON.stringify(data));
+    localStorage.setItem("mode", selectedMode);
     setImo(id);
     setShipData(data);
+    setMode(selectedMode);
     setPage("dashboard");
   };
 
   const handleBack = () => {
     localStorage.removeItem("imo");
     localStorage.removeItem("shipData");
+    localStorage.removeItem("mode");
     setImo("");
     setShipData(null);
+    setMode("single");
     setPage("landing");
   };
 
@@ -3529,7 +3704,16 @@ export default function App() {
         />
       )}
 
-      {page === "dashboard" && (
+      {page === "dashboard" && mode === "fleet" && (
+        <FleetDashboard
+          fleet={imo}          // array of IMOs
+          results={shipData}   // array of { imo, status, data }
+          onBack={handleBack}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {page === "dashboard" && mode === "single" && (
         <Dashboard
           imo={imo}
           shipData={shipData}
