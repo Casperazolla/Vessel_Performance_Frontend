@@ -195,7 +195,7 @@ function LandingPage({ onEnter, onLogout }) {
           alignItems: "center",
           padding: isMobile ? "32px 4vw" : "60px 7vw",
         }}>
-          {/* Left â€” module cards */}
+          {/* Left - module cards */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {modules.map((m, i) => (
               <div key={i} style={{
@@ -222,7 +222,7 @@ function LandingPage({ onEnter, onLogout }) {
             ))}
           </div>
 
-          {/* Right â€” form card */}
+          {/* Right - form card */}
           <div className="Rightcard" style={{
             background: "rgba(10,25,50,0.70)",
             border: `1px solid ${C.border}`,
@@ -375,13 +375,13 @@ function LandingPage({ onEnter, onLogout }) {
               }}
             >
               {loading ? (
-                <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> Analyzingâ€¦</>
+                <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> Analyzing</>
               ) : (analysisMode === "fleet" ? "ANALYZE FLEET" : "ANALYZE VESSEL")}
             </button>
 
             <div style={{ textAlign: "center" }}>
 
-              < a onClick={() => {
+              <a onClick={() => {
                 const subject = encodeURIComponent("OPTIQ Support Request");
                 const body = encodeURIComponent(
                   "Hello OPTIQ Support,\n\nI need assistance with:\n\nDescription:\n\nRegards,"
@@ -502,7 +502,7 @@ function LandingPage({ onEnter, onLogout }) {
             </a>
             <span>|</span>
           </div>
-          <span>Â© 2026 Azolla, All Rights Reserved </span>
+          <span>© 2026 Azolla, All Rights Reserved </span>
         </div>
       </div>
     </div>
