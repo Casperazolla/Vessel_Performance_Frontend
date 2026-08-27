@@ -83,17 +83,6 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    // Recover from stale localStorage mode by deriving mode from persisted data shape.
-    if (page !== "dashboard" || shipData == null) return;
-
-    const inferredMode = Array.isArray(shipData) ? "fleet" : "single";
-    if (mode !== inferredMode) {
-      setMode(inferredMode);
-      localStorage.setItem("mode", inferredMode);
-    }
-  }, [page, shipData, mode]);
-
   const handleEnter = (id, data, selectedMode = "single") => {
     localStorage.setItem("imo", JSON.stringify(id));   // id: string (single) or array (fleet)
     localStorage.setItem("shipData", JSON.stringify(data));
