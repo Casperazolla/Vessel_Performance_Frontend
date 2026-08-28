@@ -32,7 +32,16 @@ function LandingPage({ onEnter, onLogout }) {
   const isValidImo = (value) => /^\d{7}$/.test((value || "").trim());
 
   const ANALYSIS_URL = "https://da.azolla.sg/Vessel_Performance_Project/run";
+  const DESIGN_PARAMS_URL = "https://da.azolla.sg/Vessel_Performance_Project/design_params";
 
+  const fetchFleetDesignParams = async (imos) => {
+    const response = await fetch(DESIGN_PARAMS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imos }),
+    });
+    return response.json();
+  };
   const toFiniteNumber = (value) => {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -126,23 +135,30 @@ function LandingPage({ onEnter, onLogout }) {
       setErr("");
       setLoading(true);
       try {
-        // Pass 1: fetch vessel-specific design values.
-        const baseResults = await Promise.all(
-          fleetImos.map(async (fleetImo) => {
-            const json = await callRunAnalysis(fleetImo);
-            return { imo: fleetImo, status: json.status, data: json };
-          })
-        );
+        // Pass 1: one cheap call for the whole fleet's design values.
+        const designResp = await fetchFleetDesignParams(fleetImos);
 
-        const designRows = baseResults
-          .map((item) => {
-            const { draught, speed } = extractDesignValues(item.data);
-            return { imo: item.imo, draught, speed, ok: item.status === "success" };
+        if (designResp.status !== "success") {
+          setErr(designResp.message || "Unable to read design draught/speed for fleet IMOs.");
+          setLoading(false);
+          return;
+        }
+
+        const perVessel = designResp.per_vessel || {};
+
+        const designRows = fleetImos
+          .map((fleetImo) => {
+            const dp = perVessel[fleetImo] || {};
+            return {
+              imo: fleetImo,
+              draught: toFiniteNumber(dp.design_draught),
+              speed: toFiniteNumber(dp.design_speed),
+            };
           })
-          .filter((row) => row.ok && row.draught != null && row.speed != null);
+          .filter((row) => row.draught != null && row.speed != null);
 
         if (designRows.length === 0) {
-          setErr("Unable to read DESIGN_DRAUGHT and DESIGN_SPEED for fleet IMOs.");
+          setErr("Unable to read design draught/speed for fleet IMOs.");
           setLoading(false);
           return;
         }
