@@ -31,6 +31,66 @@ function LandingPage({ onEnter, onLogout }) {
 
   const isValidImo = (value) => /^\d{7}$/.test((value || "").trim());
 
+  const ANALYSIS_URL = "https://da.azolla.sg/Vessel_Performance_Project/run";
+
+  const toFiniteNumber = (value) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+  };
+
+  const extractDesignValues = (payload) => {
+    if (!payload || typeof payload !== "object") {
+      return { draught: null, speed: null };
+    }
+
+    const searchSpaces = [payload, payload?.data, payload?.vessel_data, payload?.metadata].filter(Boolean);
+
+    let draught = null;
+    let speed = null;
+
+    for (const space of searchSpaces) {
+      if (draught == null) {
+        draught =
+          toFiniteNumber(space?.DESIGN_DRAUGHT) ??
+          toFiniteNumber(space?.design_draught) ??
+          toFiniteNumber(space?.designDraft) ??
+          toFiniteNumber(space?.draft_design);
+      }
+
+      if (speed == null) {
+        speed =
+          toFiniteNumber(space?.DESIGN_SPEED) ??
+          toFiniteNumber(space?.design_speed) ??
+          toFiniteNumber(space?.designSpeed);
+      }
+
+      if (draught != null && speed != null) {
+        break;
+      }
+    }
+
+    return { draught, speed };
+  };
+
+  const callRunAnalysis = async (targetImo, options = {}) => {
+    const formdata = new FormData();
+    formdata.append("text_input", targetImo);
+
+    if (options.fleetDraught != null) {
+      formdata.append("fleet_draught", String(options.fleetDraught));
+    }
+    if (options.fleetSpeed != null) {
+      formdata.append("fleet_speed", String(options.fleetSpeed));
+    }
+
+    const response = await fetch(ANALYSIS_URL, {
+      method: "POST",
+      body: formdata,
+    });
+
+    return response.json();
+  };
+
   const addFleetImo = () => {
     const nextImo = imo.trim();
 
@@ -66,18 +126,50 @@ function LandingPage({ onEnter, onLogout }) {
       setErr("");
       setLoading(true);
       try {
-        const results = await Promise.all(
+        // Pass 1: fetch vessel-specific design values.
+        const baseResults = await Promise.all(
           fleetImos.map(async (fleetImo) => {
-            const formdata = new FormData();
-            formdata.append("text_input", fleetImo);
-            const res = await fetch(
-              "https://da.azolla.sg/Vessel_Performance_Project/run",
-              { method: "POST", body: formdata }
-            );
-            const json = await res.json();
+            const json = await callRunAnalysis(fleetImo);
             return { imo: fleetImo, status: json.status, data: json };
           })
         );
+
+        const designRows = baseResults
+          .map((item) => {
+            const { draught, speed } = extractDesignValues(item.data);
+            return { imo: item.imo, draught, speed, ok: item.status === "success" };
+          })
+          .filter((row) => row.ok && row.draught != null && row.speed != null);
+
+        if (designRows.length === 0) {
+          setErr("Unable to read DESIGN_DRAUGHT and DESIGN_SPEED for fleet IMOs.");
+          setLoading(false);
+          return;
+        }
+
+        const minFleetDraught = Math.min(...designRows.map((row) => row.draught));
+        const minFleetSpeed = Math.min(...designRows.map((row) => row.speed));
+
+        // Pass 2: run all vessels against shared minimum draught/speed.
+        const results = await Promise.all(
+          fleetImos.map(async (fleetImo) => {
+            const json = await callRunAnalysis(fleetImo, {
+              fleetDraught: minFleetDraught,
+              fleetSpeed: minFleetSpeed,
+            });
+
+            return {
+              imo: fleetImo,
+              status: json.status,
+              data: json,
+              fleet_reference: {
+                fleet_draught: minFleetDraught,
+                fleet_speed: minFleetSpeed,
+              },
+            };
+          })
+        );
+
         onEnter(fleetImos, results, "fleet");   // array + results + mode
       } catch (error) {
         console.error(error);
@@ -104,21 +196,7 @@ function LandingPage({ onEnter, onLogout }) {
     setLoading(true);
 
     try {
-
-      const formdata = new FormData();
-      formdata.append("text_input", targetImo);
-
-      const response = await fetch(
-        "https://da.azolla.sg/Vessel_Performance_Project/run",
-        {
-          method: "POST",
-          body: formdata,
-        }
-      );
-
-      console.log(" RESPONSE RECEIVED");
-
-      const result = await response.json();
+      const result = await callRunAnalysis(targetImo);
 
 
       if (result.status === "success") {
