@@ -235,21 +235,21 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
   ];
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: C.mainBg }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#f5f7fa" }}>
 
       {/* Sidebar */}
       {!isMobile && (
         <div style={{
           width: 200, flexShrink: 0,
           background: C.sidebarBg,
-          borderRight: `1px solid ${C.borderSubtle}`,
+          borderRight: "1px solid #e5e7eb",
           display: "flex", flexDirection: "column",
           padding: "20px 0",
         }}>
           {/* Logo */}
-          <div style={{ padding: "0 20px 20px", borderBottom: `1px solid ${C.borderSubtle}` }}>
+          <div style={{ padding: "0 20px 20px", borderBottom: "1px solid #e5e7eb" }}>
             <Logo small />
-            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 4 }}>IMO {imo}</div>
+            <div style={{ fontSize: 10, color: "#fdfdff", marginTop: 4 }}>IMO {imo}</div>
           </div>
 
           {/* Nav */}
@@ -258,9 +258,9 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
               <button key={n.id} onClick={() => setActiveTab(n.id)} style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "10px 12px", borderRadius: 9,
-                background: activeTab === n.id ? "rgba(56,189,248,0.1)" : "transparent",
-                border: activeTab === n.id ? `1px solid rgba(56,189,248,0.25)` : "1px solid transparent",
-                color: activeTab === n.id ? C.accent : C.textSecondary,
+                background: activeTab === n.id ? "#dbeafe" : "transparent",
+                border: activeTab === n.id ? "1px solid #93c5fd" : "1px solid transparent",
+                color: activeTab === n.id ? "#2563eb" : "#f7f8fa",
                 fontSize: 13, fontWeight: activeTab === n.id ? 600 : 400,
                 cursor: "pointer", textAlign: "left", width: "100%",
                 transition: "all .15s",
@@ -271,12 +271,12 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
           </nav>
 
           {/* Back button */}
-          <div style={{ padding: "12px 10px", borderTop: `1px solid ${C.borderSubtle}`, display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ padding: "12px 10px", borderTop: "1px solid #e5e7eb", display: "flex", flexDirection: "column", gap: 6 }}>
             <button onClick={onBack} style={{
               width: "100%", padding: "9px 12px", borderRadius: 8,
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${C.borderSubtle}`,
-              color: C.textMuted, fontSize: 12, cursor: "pointer",
+              background: "#f3f4f6",
+              border: "1px solid #d1d5db",
+              color: "#4b5563", fontSize: 12, cursor: "pointer",
               display: "flex", alignItems: "center", gap: 8,
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
@@ -284,9 +284,9 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
             </button>
             <button onClick={onLogout} style={{
               width: "100%", padding: "9px 12px", borderRadius: 8,
-              background: "rgba(239,68,68,0.07)",
-              border: `1px solid rgba(239,68,68,0.2)`,
-              color: "#f87171", fontSize: 12, cursor: "pointer",
+              background: "#fecdd3",
+              border: "1px solid #fca5a5",
+              color: "#dc2626", fontSize: 12, cursor: "pointer",
               display: "flex", alignItems: "center", gap: 8,
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
@@ -304,24 +304,24 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
           <div style={{
             display: "flex", overflowX: "auto", gap: 4,
             padding: "10px 12px",
-            background: C.sidebarBg,
-            borderBottom: `1px solid ${C.borderSubtle}`,
+            background: "#f5f7fa",
+            borderBottom: "1px solid #e5e7eb",
             scrollbarWidth: "none",
           }}>
             {navItems.map(n => (
               <button key={n.id} onClick={() => setActiveTab(n.id)} style={{
                 flexShrink: 0, padding: "7px 14px", borderRadius: 20,
-                border: `1px solid ${activeTab === n.id ? C.borderActive : C.border}`,
-                background: activeTab === n.id ? C.accentDim : "transparent",
-                color: activeTab === n.id ? C.accent : C.textMuted,
+                border: `1px solid ${activeTab === n.id ? "#93c5fd" : "#d1d5db"}`,
+                background: activeTab === n.id ? "#dbeafe" : "transparent",
+                color: activeTab === n.id ? "#2563eb" : "#6b7280",
                 fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
               }}>{n.label}</button>
             ))}
             <button onClick={onLogout} style={{
               flexShrink: 0, padding: "7px 14px", borderRadius: 20,
-              border: `1px solid rgba(239,68,68,0.3)`,
-              background: "rgba(239,68,68,0.07)",
-              color: "#f87171",
+              border: "1px solid #fca5a5",
+              background: "#fecdd3",
+              color: "#dc2626",
               fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
             }}>Logout</button>
           </div>
@@ -391,13 +391,13 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
 function ChartCard({ title, children, controls }) {
   return (
     <div style={{
-      background: C.cardSolid,
-      border: `1px solid ${C.borderCard}`,
+      background: "#ffffff",
+      border: "1px solid #e5e7eb",
       borderRadius: 14, padding: "20px 20px 16px",
       animation: "fadeIn 0.4s both",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, fontFamily: "'Aeonik',sans-serif" }}>{title}</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1f2937", fontFamily: "'Aeonik',sans-serif" }}>{title}</span>
         {controls}
       </div>
       {children}
@@ -498,7 +498,7 @@ function DashboardTab({
 
   const fcInput = {
     padding: "10px", borderRadius: 8,
-    background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary,
+    background: "white", border: `1px solid ${C.border}`, color: "black",
   };
 
   const curves =
@@ -631,7 +631,7 @@ function DashboardTab({
             if (onHover && st && st.activeLabel != null) onHover(Number(st.activeLabel));
           }}
           onMouseLeave={() => onHover && onHover(null)}>
-          <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 3" vertical={false} />
+          <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
           <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }}
             label={{ value: "Speed (knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
           <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={55}
@@ -765,11 +765,59 @@ curvesPayload[key] = {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: "20px" }}>
+      
+      {/* KPI Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12 }}>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#0891b2", textTransform: "uppercase", marginBottom: 10 }}>Speed</div>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>21.3 <span style={{ fontSize: 12, color: "#6b7280" }}>kn</span></div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>+0.8 kn vs baseline</div>
+            </div>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+          </div>
+        </div>
+
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", marginBottom: 10 }}>Final Power</div>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>25,918 <span style={{ fontSize: 12, color: "#6b7280" }}>kW</span></div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>+4,581 kW (+21.5%)</div>
+            </div>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+          </div>
+        </div>
+
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#2563eb", textTransform: "uppercase", marginBottom: 10 }}>Fuel Consumption</div>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>78.4 <span style={{ fontSize: 12, color: "#6b7280" }}>t/day</span></div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>+12.4% vs baseline</div>
+            </div>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M12 2v20M17 5H9a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-6a4 4 0 0 0-4-4Z" /></svg>
+          </div>
+        </div>
+
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#ea580c", textTransform: "uppercase", marginBottom: 10 }}>Added Power</div>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>+21.5<span style={{ fontSize: 12, color: "#6b7280" }}>%</span></div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>Weather + Fouling</div>
+            </div>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="1.5"><path d="M12 2v20M5 10h14M5 14h14" /></svg>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 14, padding: "20px" }}>
 
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "black" }}>
             Speed vs Power - IMO {shipData?.imo}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -805,10 +853,10 @@ curvesPayload[key] = {
         <div
           style={{
             marginBottom: 16, padding: 16,
-            background: C.statBg, border: `1px solid ${C.borderCard}`, borderRadius: 12,
+            background: "white", border: `1px solid ${C.borderCard}`, borderRadius: 12,
           }}
         >
-          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: C.accent }}>
+          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: "#0a8f7a" }}>
             Fouling Curve
           </label>
 
@@ -878,7 +926,7 @@ curvesPayload[key] = {
           style={{
             marginBottom: 16,
             padding: 16,
-            background: C.statBg,
+            background: "white",
             border: `1px solid ${C.borderCard}`,
             borderRadius: 12,
           }}
@@ -896,9 +944,9 @@ curvesPayload[key] = {
                 width: 220,
                 padding: "10px",
                 borderRadius: 8,
-                background: C.inputBg,
+                background: "white",
                 border: `1px solid ${C.border}`,
-                color: C.textPrimary,
+                color: "black",
               }}
             >
               <option value="manual">Manual</option>
@@ -940,7 +988,7 @@ curvesPayload[key] = {
                   placeholder="Enter Area_T"
                   style={{
                     width: "100%", padding: "10px", borderRadius: 8,
-                    background: C.inputBg, border: `1px solid ${C.accent}`, color: C.textPrimary,
+                    background: "white", border: `1px solid ${C.accent}`, color: "black",
                   }}
                 />
               </div>
@@ -964,9 +1012,9 @@ curvesPayload[key] = {
                     width: "100%",
                     padding: "10px",
                     borderRadius: 8,
-                    background: C.inputBg,
+                    background: "white",
                     border: `1px solid ${C.border}`,
-                    color: C.textSecondary,
+                    color: "black",
                   }}
                 />
               </div>
@@ -990,9 +1038,9 @@ curvesPayload[key] = {
                     width: "100%",
                     padding: "10px",
                     borderRadius: 8,
-                    background: C.inputBg,
+                    background: "white",
                     border: `1px solid ${C.border}`,
-                    color: C.textSecondary,
+                    color: "black",
                   }}
                 />
               </div>
@@ -1017,9 +1065,9 @@ curvesPayload[key] = {
                     width: "100%",
                     padding: "10px",
                     borderRadius: 8,
-                    background: C.inputBg,
+                    background:"white",
                     border: `1px solid ${C.accent}`,
-                    color: C.textPrimary,
+                    color: "black",
                     fontSize: 12,
                     cursor: "pointer",
                   }}
@@ -1055,9 +1103,9 @@ curvesPayload[key] = {
                     width: "100%",
                     padding: "10px",
                     borderRadius: 8,
-                    background: C.inputBg,
+                    background:"white",
                     border: `1px solid ${C.border}`,
-                    color: C.textSecondary,
+                    color: "black",
                   }}
                 />
               </div>
@@ -1065,8 +1113,8 @@ curvesPayload[key] = {
               <button style={{
                 padding: "10px 12px",
                 borderRadius: 8,
-                background: C.accent,
-                border: `1px solid ${C.border}`,
+                background: "#2563eb",
+                border: "1px solid #1e40af",
                 color: "#fff",
                 fontSize: 11, cursor: "pointer",
                 marginTop: 16,
@@ -1166,8 +1214,8 @@ curvesPayload[key] = {
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
-                  background: C.accent,
-                  border: `1px solid ${C.border}`,
+                  background: "#2563eb",
+                  border: "1px solid #1e40af",
                   color: "#fff",
                   fontSize: 11,
                   cursor: "pointer",
@@ -1212,8 +1260,8 @@ curvesPayload[key] = {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
 
           {/* Left - lowest draught (fixed) */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, height: 34 }}>
+          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 16, background: "#ffffff" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, height: 34 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
                 Draught - 
               </span>
@@ -1246,8 +1294,8 @@ curvesPayload[key] = {
           </div>
 
           {/* Right - selectable draught (default highest) */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, height: 34, flexWrap: "nowrap" }}>
+          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 16, background: "#ffffff" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, height: 34, flexWrap: "nowrap" }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
                 Compare draught
               </span>
@@ -1311,15 +1359,15 @@ curvesPayload[key] = {
 
 
         {fuelConsumptionData && Object.keys(fuelConsumptionData).length > 0 && (
-          <div style={{ marginTop: 24, border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.cardSolid, padding: 16 }}>
+          <div style={{ marginTop: 24, border: "1px solid #e5e7eb", borderRadius: 12, background: "#ffffff", padding: 16 }}>
 
             {/* Header row: title + caption + unit toggle */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937" }}>
                   Fuel Consumption {fuelUnit === "usd" ? "($/day)" : "(t/day)"}
                 </div>
-               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+               <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
   {(() => {
     if (weatherApplied) {
       return "On final power - includes Fouling + Weather";
@@ -1335,24 +1383,24 @@ curvesPayload[key] = {
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 {fuelUnit === "usd" && (
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: C.textMuted }}>Bunker $/t</span>
+                    <span style={{ fontSize: 11, color: "#6b7280" }}>Bunker $/t</span>
                     <input
                       type="number"
                       value={bunkerPrice}
                       onChange={(e) => setBunkerPrice(e.target.value)}
-                      style={{ width: 70, padding: "5px 8px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}
+                      style={{ width: 70, padding: "5px 8px", borderRadius: 6, background: "#f3f4f6", border: "1px solid #d1d5db", color: "#1f2937", fontSize: 11 }}
                     />
                   </div>
                 )}
-                <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+                <div style={{ display: "inline-flex", border: "1px solid #d1d5db", borderRadius: 8, overflow: "hidden" }}>
                   {["tpd", "usd"].map((u) => (
                     <span
                       key={u}
                       onClick={() => setFuelUnit(u)}
                       style={{
                         padding: "6px 14px", fontSize: 11, cursor: "pointer",
-                        background: fuelUnit === u ? C.accentDim : "transparent",
-                        color: fuelUnit === u ? C.accent : C.textSecondary,
+                        background: fuelUnit === u ? "#2563eb" : "transparent",
+                        color: fuelUnit === u ? "#ffffff" : "#6b7280",
                       }}
                     >
                       {u === "tpd" ? "t/day" : "$/day"}
@@ -1370,8 +1418,8 @@ curvesPayload[key] = {
                     <th
                       style={{
                         position: "sticky",
-                        border: "1px solid #444",
-                        background: "#1f2937",
+                        border: "1px solid #bfdbfe",
+                        background: "#dbeafe",
                         width: "80px",
                         minWidth: "80px",
                         height: "70px",
@@ -1391,9 +1439,9 @@ curvesPayload[key] = {
                           background: `
 linear-gradient(
   to bottom left,
-  #28415E 49.5%,
-  #4AA3FF 50%,
-  #28415E 50.5%
+  #dbeafe 49.5%,
+  #dbeafe 50%,
+  #dbeafe 50.5%
 )
                         `
                         }}
@@ -1406,7 +1454,7 @@ linear-gradient(
                           top: "8px",
                           right: "10px",
                           fontWeight: 600,
-                          color: "black",
+                          color: "#1f2937",
                         }}
                       >
                         Speed
@@ -1419,7 +1467,7 @@ linear-gradient(
                           bottom: "8px",
                           left: "10px",
                           fontWeight: 600,
-                          color: "C.accent",
+                          color: "#2563eb",
 
                         }}
                       >
@@ -1427,7 +1475,7 @@ linear-gradient(
                       </span>
                     </th>
                     {fuelConsumptionData[Object.keys(fuelConsumptionData)[0]].speed.map((speed) => (
-                      <th key={speed} style={{ padding: "10px 12px", background: C.statBg, textAlign: "center", color: C.accent, fontWeight: 600, border: `1px solid ${C.borderSubtle}` }}>
+                      <th key={speed} style={{ padding: "10px 12px", background: "#dbeafe", textAlign: "center", color: "#1f2937", fontWeight: 600, border: "1px solid #bfdbfe" }}>
                         {speed.toFixed(1)}
                       </th>
                     ))}
@@ -1442,31 +1490,39 @@ linear-gradient(
         style={{
           padding: "10px",
           textAlign: "center",
-          color: C.accent,
+          color: "#2563eb",
           fontWeight: 600,
-          border: `1px solid ${C.borderSubtle}`,
+          border: "1px solid #bfdbfe",
           position: "sticky",
           left: 0,
-          background: C.cardSolid,
+          background: "#eff6ff",
           zIndex: 0,
         }}
       >
         {draughtData.draught.toFixed(2)}
       </td>
 
-      {draughtData.fuel_t_per_day.map((fuel, index) => (
-        <td
-          key={index}
-          style={{
-            padding: "10px",
-            textAlign: "center",
-            border: `1px solid ${C.borderSubtle}`,
-            color: C.textSecondary,
-          }}
-        >
-          {fuel.toFixed(3)}
-        </td>
-      ))}
+      {draughtData.fuel_t_per_day.map((fuel, index) => {
+        // Light blue gradient on right cells
+        const totalCells = draughtData.fuel_t_per_day.length;
+        const isBlueCells = index >= totalCells - 4;
+        const bgColor = isBlueCells ? "#dbeafe" : "#ffffff";
+        
+        return (
+          <td
+            key={index}
+            style={{
+              padding: "10px",
+              textAlign: "center",
+              border: "1px solid #bfdbfe",
+              color: "#1f2937",
+              background: bgColor,
+            }}
+          >
+            {fuel.toFixed(3)}
+          </td>
+        );
+      })}
     </tr>
   ))}
                 </tbody>
@@ -1877,7 +1933,7 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
           display: "flex",
           gap: 12,
           alignItems: "center",
-          background: C.cardSolid,
+          background: "white",
           border: `1px solid ${C.borderCard}`,
           borderRadius: 12,
           padding: "14px",
@@ -1891,9 +1947,9 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
           style={{
             padding: "10px 12px",
             borderRadius: 8,
-            background: C.inputBg,
+            background: "white",
             border: `1px solid ${C.border}`,
-            color: C.textPrimary,
+            color: "black",
             minWidth: 180,
           }}
         >
@@ -1941,11 +1997,11 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 2fr 1fr", gap: 16 }}>
 
         {/* Column 1 - Hull photos list */}
-        <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 12, overflow: "hidden" }}>
-          <div style={{ padding: "12px 14px", borderBottom: `1px solid ${C.borderSubtle}` }}>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid #e5e7eb" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 20, height: 20, borderRadius: 4, background: C.accentDim, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: C.accent, fontWeight: 700 }}>1</div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, fontFamily: "'Aeonik',sans-serif", letterSpacing: "0.05em" }}>HULL PHOTOS</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#1f2937", fontFamily: "'Aeonik',sans-serif", letterSpacing: "0.05em" }}>HULL PHOTOS</span>
             </div>
           </div>
 
@@ -1963,11 +2019,11 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
                   cursor: "pointer",
                   border:
                     selected === i
-                      ? `1px solid ${C.accent}`
-                      : `1px solid ${C.borderSubtle}`,
+                      ? "1px solid #2563eb"
+                      : "1px solid #e5e7eb",
                   background:
                     selected === i
-                      ? C.accentDim
+                      ? "#dbeafe"
                       : "transparent",
                 }}
               >
@@ -1979,7 +2035,7 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
                   <div>
                     <div style={{
                       fontSize: 12,
-                      color: C.textPrimary,
+                      color: "#1f2937",
                       fontWeight: 600,
                     }}>
                       {img.label}
@@ -2084,9 +2140,9 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: `1px dashed ${C.border}`,
+                  border: "1px dashed #d1d5db",
                   borderRadius: 10,
-                  color: C.textMuted,
+                  color: "#6b7280",
                   fontSize: 13,
                 }}>
                   Upload image for AI analysis
@@ -2215,11 +2271,11 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
         </div>
 
         {/* Column 3 - Penalty scorecard */}
-        <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 12, overflow: "hidden" }}>
-          <div style={{ padding: "12px 14px", borderBottom: `1px solid ${C.borderSubtle}` }}>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid #e5e7eb" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 4, background: C.accentDim, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: C.accent, fontWeight: 700 }}>3</div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, fontFamily: "'Aeonik',sans-serif", letterSpacing: "0.05em" }}>PENALTY SCORECARD</span>
+              <div style={{ width: 20, height: 20, borderRadius: 4, background: "#dbeafe", border: "1px solid #2563eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#2563eb", fontWeight: 700 }}>3</div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#1f2937", fontFamily: "'Aeonik',sans-serif", letterSpacing: "0.05em" }}>PENALTY SCORECARD</span>
             </div>
           </div>
           <div style={{ padding: "14px", display: "flex", flexDirection: "column", gap: 12 }}>
@@ -2229,8 +2285,8 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
             {scorecard.map((s, i) => (
               <div key={i}>
                 {/* Render scorecard item */}
-                <div style={{ padding: "12px 14px", background: C.statBg, border: `1px solid ${C.borderCard}`, borderRadius: 8 }}>
-                  <div style={{ fontSize: 9, color: C.textMuted, letterSpacing: "0.08em", marginBottom: 5 }}>{s.label}</div>
+                <div style={{ padding: "12px 14px", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 8 }}>
+                  <div style={{ fontSize: 9, color: "#6b7280", letterSpacing: "0.08em", marginBottom: 5 }}>{s.label}</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: s.color, fontFamily: "'Aeonik',sans-serif" }}>{s.value}</div>
                 </div>
 
@@ -2239,8 +2295,8 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
                   <div style={{
                     marginTop: 12,
                     padding: "12px 14px",
-                    background: C.statBg,
-                    border: `1px solid ${C.borderCard}`,
+                    background: "#f3f4f6",
+                    border: "1px solid #e5e7eb",
                     borderRadius: 8,
                     display: "flex",
                     flexDirection: "column",
@@ -2271,9 +2327,9 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
                         style={{
                           padding: "8px 10px",
                           borderRadius: 6,
-                          background: C.inputBg,
+                          background: "white",
                           border: `1px solid ${C.border}`,
-                          color: C.textPrimary,
+                          color: "black",
                           fontSize: 12,
                         }}
                       />
@@ -2441,17 +2497,17 @@ function WeatherTab({ isMobile, onEnter }) {
       <ChartCard title="Weather Impact on Power Requirement"
         controls={
           <div style={{ display: "flex", gap: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.accent} /><span style={{ fontSize: 11, color: C.textSecondary }}>Calm water</span></div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.warning} /><span style={{ fontSize: 11, color: C.textSecondary }}>With weather</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.accent} /><span style={{ fontSize: 11, color: "#6b7280" }}>Calm water</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.warning} /><span style={{ fontSize: 11, color: "#6b7280" }}>With weather</span></div>
           </div>
         }
       >
         <ResponsiveContainer width="100%" height={isMobile ? 200 : 280}>
           <LineChart data={weatherData} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3" />
-            <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }} label={{ value: "Speed (Knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
-            <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={40} />
-            <Tooltip contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} labelFormatter={v => `${v} kn`} />
+            <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" />
+            <XAxis dataKey="speed" tick={{ fontSize: 10, fill: "#6b7280" }} label={{ value: "Speed (Knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: "#6b7280" }} />
+            <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} width={40} />
+            <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 11 }} labelFormatter={v => `${v} kn`} />
             <Line type="monotone" dataKey="actual" stroke={C.accent} strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="withWeather" stroke={C.warning} strokeWidth={2} dot={false} strokeDasharray="6 3" />
 
@@ -2511,8 +2567,8 @@ function ESDTab({ isMobile }) {
         <ChartCard title="Line Chart"
           controls={
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.accent} /><span style={{ fontSize: 11, color: C.textSecondary }}>DESIGN CURVE</span></div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.critical} /><span style={{ fontSize: 11, color: C.textSecondary }}>CURRENT ACTUAL</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.accent} /><span style={{ fontSize: 11, color: "#6b7280" }}>DESIGN CURVE</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Dot color={C.critical} /><span style={{ fontSize: 11, color: "#6b7280" }}>CURRENT ACTUAL</span></div>
             </div>
           }
         >
@@ -2524,10 +2580,10 @@ function ESDTab({ isMobile }) {
                   <stop offset="100%" stopColor="rgba(16,185,129,0)" />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="4 3" />
-              <XAxis dataKey="speed" tick={{ fontSize: 10, fill: C.textMuted }} label={{ value: "Speed (Knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: C.textMuted }} />
-              <YAxis tick={{ fontSize: 10, fill: C.textMuted }} width={40} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
-              <Tooltip contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} labelFormatter={v => `${v} kn`} />
+              <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" />
+              <XAxis dataKey="speed" tick={{ fontSize: 10, fill: "#6b7280" }} label={{ value: "Speed (Knots)", position: "insideBottom", offset: -8, fontSize: 11, fill: "#6b7280" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} width={40} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: "#6b7280", offset: 10 }} />
+              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 11 }} labelFormatter={v => `${v} kn`} />
               <Area type="monotone" dataKey="design" stroke={C.accent} strokeWidth={2} fill="rgba(56,189,248,0.06)" dot={false} />
               <Area type="monotone" dataKey="actual" stroke={C.critical} strokeWidth={2} fill="transparent" dot={false} />
               {selected.length > 0 && (
@@ -2544,7 +2600,7 @@ function ESDTab({ isMobile }) {
             {selected.length > 0 && <span style={{ fontSize: 10, color: "rgba(16,185,129,0.5)", fontFamily: "'Aeonik',sans-serif", marginLeft: 16 }}>POTENTIAL SAVINGS GAP</span>}
           </div>
 
-          <div style={{ display: "flex", gap: 24, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.borderSubtle}`, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 24, marginTop: 14, paddingTop: 12, borderTop: "1px solid #e5e7eb", flexWrap: "wrap" }}>
             <Toggle label="Show Clean Hull Prediction" value={showClean} onChange={setShowClean} />
             <Toggle label="Show 2MT Weather Impact" value={showWeather} onChange={setShowWeather} />
           </div>
@@ -2554,45 +2610,45 @@ function ESDTab({ isMobile }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: isMobile ? "auto" : 200 }}>
 
           {/* ESD selection */}
-          <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 12, padding: "16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, letterSpacing: "0.1em", marginBottom: 12 }}>ESD SELECTION MENU</div>
+          <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.1em", marginBottom: 12 }}>ESD SELECTION MENU</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {devices.map(d => (
                 <div key={d.id} onClick={() => toggle(d.id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                   <div style={{
                     width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                    border: `1.5px solid ${selected.includes(d.id) ? C.accent : C.textMuted}`,
-                    background: selected.includes(d.id) ? C.accentDim : "transparent",
+                    border: `1.5px solid ${selected.includes(d.id) ? "#2563eb" : "#6b7280"}`,
+                    background: selected.includes(d.id) ? "#dbeafe" : "transparent",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "all .15s",
                   }}>
                     {selected.includes(d.id) && (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                     )}
                   </div>
-                  <span style={{ fontSize: 13, color: selected.includes(d.id) ? C.accent : C.textSecondary }}>{d.label}</span>
+                  <span style={{ fontSize: 13, color: selected.includes(d.id) ? "#2563eb" : "#6b7280" }}>{d.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* ROI */}
-          <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 12, padding: "16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.textSecondary, letterSpacing: "0.1em", marginBottom: 10 }}>SIMULATED SAVINGS ROI:</div>
+          <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.1em", marginBottom: 10 }}>SIMULATED SAVINGS ROI:</div>
             {[
               { label: "Investment:", value: roi.investment },
               { label: "Payback:", value: roi.payback },
               { label: "Annual $ Saving:", value: roi.annual },
             ].map((r, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontSize: 12, color: C.textMuted }}>{r.label}</span>
-                <span style={{ fontSize: 12, color: C.accent, fontWeight: 600 }}>{r.value}</span>
+                <span style={{ fontSize: 12, color: "#6b7280" }}>{r.label}</span>
+                <span style={{ fontSize: 12, color: "#2563eb", fontWeight: 600 }}>{r.value}</span>
               </div>
             ))}
             <button style={{
               width: "100%", marginTop: 8, padding: "10px",
-              background: "rgba(56,189,248,0.1)", border: `1px solid ${C.accent}`,
-              color: C.accent, borderRadius: 8, fontSize: 12, fontWeight: 700,
+              background: "#dbeafe", border: "1px solid #2563eb",
+              color: "#2563eb", borderRadius: 8, fontSize: 12, fontWeight: 700,
               cursor: "pointer", fontFamily: "'Aeonik',sans-serif",
             }}>Generate Comparison Report</button>
           </div>
@@ -2622,17 +2678,17 @@ function ReportsTab({ isMobile, imo, shipData }) {
         <div key={i} style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: 12, padding: "16px 18px",
-          background: C.cardSolid, border: `1px solid ${C.borderCard}`,
+          background: "white", border: `1px solid black`,
           borderRadius: 10, animation: `slideUp 0.3s ${i * 0.08}s both`,
-          flexWrap: "wrap",
+          flexWrap: "wrap", color: "black"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 8, background: C.accentDim, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
             </div>
             <div>
-              <div style={{ fontSize: 13, color: C.textPrimary, fontWeight: 500 }}>{r.title}</div>
-              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{r.date} - {r.type}</div>
+              <div style={{ fontSize: 13, color: "black", fontWeight: 500 }}>{r.title}</div>
+              <div style={{ fontSize: 11, color: "black", marginTop: 2 }}>{r.date} - {r.type}</div>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
