@@ -32,16 +32,7 @@ function LandingPage({ onEnter, onLogout }) {
   const isValidImo = (value) => /^\d{7}$/.test((value || "").trim());
 
   const ANALYSIS_URL = "https://da.azolla.sg/Vessel_Performance_Project/run";
-  const DESIGN_PARAMS_URL = "https://da.azolla.sg/Vessel_Performance_Project/design_params";
-
-  const fetchFleetDesignParams = async (imos) => {
-    const response = await fetch(DESIGN_PARAMS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imos }),
-    });
-    return response.json();
-  };
+  const MARINE_DATA_URL = "https://be.azolla.sg/v2/vessel/latest_marine_data/";
   const toFiniteNumber = (value) => {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -79,6 +70,12 @@ function LandingPage({ onEnter, onLogout }) {
     }
 
     return { draught, speed };
+  };
+
+  const fetchDesignValuesForImo = async (targetImo) => {
+    const response = await fetch(`${MARINE_DATA_URL}?imo_number=${targetImo}`);
+    const json = await response.json();
+    return extractDesignValues(json);
   };
 
   const callRunAnalysis = async (targetImo, options = {}) => {
@@ -135,27 +132,17 @@ function LandingPage({ onEnter, onLogout }) {
       setErr("");
       setLoading(true);
       try {
-        // Pass 1: one cheap call for the whole fleet's design values.
-        const designResp = await fetchFleetDesignParams(fleetImos);
-
-        if (designResp.status !== "success") {
-          setErr(designResp.message || "Unable to read design draught/speed for fleet IMOs.");
-          setLoading(false);
-          return;
-        }
-
-        const perVessel = designResp.per_vessel || {};
-
-        const designRows = fleetImos
-          .map((fleetImo) => {
-            const dp = perVessel[fleetImo] || {};
-            return {
-              imo: fleetImo,
-              draught: toFiniteNumber(dp.design_draught),
-              speed: toFiniteNumber(dp.design_speed),
-            };
+        // Pass 1: fetch each vessel's design values from marine-data API.
+        const designRowsRaw = await Promise.all(
+          fleetImos.map(async (fleetImo) => {
+            const { draught, speed } = await fetchDesignValuesForImo(fleetImo);
+            return { imo: fleetImo, draught, speed };
           })
-          .filter((row) => row.draught != null && row.speed != null);
+        );
+
+        const designRows = designRowsRaw.filter(
+          (row) => row.draught != null && row.speed != null
+        );
 
         if (designRows.length === 0) {
           setErr("Unable to read design draught/speed for fleet IMOs.");

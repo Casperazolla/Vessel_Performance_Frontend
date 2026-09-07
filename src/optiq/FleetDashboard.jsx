@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { C, useMediaQuery, Logo } from "./shared";
+import FleetBenchmark from "/FleetBenchmark";
 
 function getFoulingConfig(idleDaysRaw) {
   const d = parseInt(idleDaysRaw, 10);
@@ -227,6 +228,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
     setWeatherLoading(false);
   };
 
+/* Fuel-table data disabled for now (table view commented out)
   const commonDraughtTables = useMemo(() => {
     const activeImos = ok.map((v) => v.imo).filter((imo) => {
       const data = fuelByImo[imo];
@@ -269,6 +271,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
       return { draught: draughtKey, speeds: commonSpeedKeys, rows };
     });
   }, [fuelByImo, ok]);
+*/
 
   const summary = [
     { label: "FLEET SIZE", value: list.length, color: C.accent },
@@ -446,6 +449,9 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
           <div style={{ fontSize: 12, color: "#f87171" }}>{error}</div>
         )}
 
+        <FleetBenchmark ok={ok} fuelByImo={fuelByImo} />
+
+        {/* FUEL TABLES — commented out for now
         {commonDraughtTables.length === 0 ? (
           <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16, color: C.textMuted, fontSize: 12 }}>
             No common draught and speed grid is available across all analyzed vessels yet.
@@ -487,6 +493,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
             ))}
           </div>
         )}
+        */}
       </div>
     </div>
   );
