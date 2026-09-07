@@ -284,9 +284,9 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
             </button>
             <button onClick={onLogout} style={{
               width: "100%", padding: "9px 12px", borderRadius: 8,
-              background: "#fecdd3",
-              border: "1px solid #fca5a5",
-              color: "#dc2626", fontSize: 12, cursor: "pointer",
+              background: "#ffffff",
+              border: "1px solid #e5e7eb",
+              color: "#1f2937", fontSize: 12, fontWeight: 600, cursor: "pointer",
               display: "flex", alignItems: "center", gap: 8,
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
@@ -319,9 +319,9 @@ function Dashboard({ imo, onBack, shipData, onLogout }) {
             ))}
             <button onClick={onLogout} style={{
               flexShrink: 0, padding: "7px 14px", borderRadius: 20,
-              border: "1px solid #fca5a5",
-              background: "#fecdd3",
-              color: "#dc2626",
+              border: "1px solid #e5e7eb",
+              background: "#ffffff",
+              color: "#1f2937",
               fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
             }}>Logout</button>
           </div>
@@ -767,57 +767,57 @@ curvesPayload[key] = {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       
       {/* KPI Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12 }}>
-        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#0891b2", textTransform: "uppercase", marginBottom: 10 }}>Speed</div>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px" }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#0891b2", textTransform: "uppercase", marginBottom: 6 }}>Speed</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>21.3 <span style={{ fontSize: 12, color: "#6b7280" }}>kn</span></div>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>+0.8 kn vs baseline</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>21.3 <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>kn</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>+0.8 kn vs baseline</div>
             </div>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
           </div>
         </div>
 
-        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", marginBottom: 10 }}>Final Power</div>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px" }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", marginBottom: 6 }}>Final Power</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>25,918 <span style={{ fontSize: 12, color: "#6b7280" }}>kW</span></div>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>+4,581 kW (+21.5%)</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>25,918 <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>kW</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>+4,581 kW (+21.5%)</div>
             </div>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           </div>
         </div>
 
-        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#2563eb", textTransform: "uppercase", marginBottom: 10 }}>Fuel Consumption</div>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px" }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#2563eb", textTransform: "uppercase", marginBottom: 6 }}>Fuel Consumption</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>78.4 <span style={{ fontSize: 12, color: "#6b7280" }}>t/day</span></div>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>+12.4% vs baseline</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>78.4 <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>t/day</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>+12.4% vs baseline</div>
             </div>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M12 2v20M17 5H9a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-6a4 4 0 0 0-4-4Z" /></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M12 2v20M17 5H9a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-6a4 4 0 0 0-4-4Z" /></svg>
           </div>
         </div>
 
-        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#ea580c", textTransform: "uppercase", marginBottom: 10 }}>Added Power</div>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px" }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#ea580c", textTransform: "uppercase", marginBottom: 6 }}>Added Power</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#1f2937" }}>+21.5<span style={{ fontSize: 12, color: "#6b7280" }}>%</span></div>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>Weather + Fouling</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>+21.5<span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>%</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>Weather + Fouling</div>
             </div>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="1.5"><path d="M12 2v20M5 10h14M5 14h14" /></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="1.5"><path d="M12 2v20M5 10h14M5 14h14" /></svg>
           </div>
         </div>
       </div>
 
-      <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 14, padding: "20px" }}>
+      <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 14, padding: "16px 18px" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "black" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#1f2937" }}>
             Speed vs Power - IMO {shipData?.imo}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -837,7 +837,7 @@ curvesPayload[key] = {
                 <div style={{ width: 32, height: 18, borderRadius: 9, position: "relative", background: showFouled ? C.critical : "rgba(255,255,255,0.12)", transition: "background .2s" }}>
                   <div style={{ position: "absolute", top: 2, left: showFouled ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left .2s" }} />
                 </div>
-                <span style={{ fontSize: 11, color: C.textSecondary }}>Fouled +{displayedPenalty}%</span>
+                <span style={{ fontSize: 11, color: "#1f2937", fontWeight: 700 }}>Fouled +{displayedPenalty}%</span>
               </div>
             )}
             {shipData?.pdf_url && (
@@ -852,12 +852,12 @@ curvesPayload[key] = {
 
         <div
           style={{
-            marginBottom: 16, padding: 16,
+            marginBottom: 12, padding: "12px 14px",
             background: "white", border: `1px solid ${C.borderCard}`, borderRadius: 12,
           }}
         >
-          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: "#0a8f7a" }}>
-            Fouling Curve
+          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: "#0a8f7a", fontWeight: 700 }}>
+            FOULING CURVE
           </label>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, alignItems: "center" }}>
@@ -1255,85 +1255,95 @@ curvesPayload[key] = {
           )}
         </div>
 
-        {/* Chart */}
-        {/* Charts - left fixed on lowest draught, right selectable (default highest) */}
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+        {/* Charts - 3 separate graphs: Compare, Fouling, Added Resistance */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
 
-          {/* Left - lowest draught (fixed) */}
-          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 16, background: "#ffffff" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, height: 34 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
-                Draught - 
-              </span>
-              <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: C.accentDim, border: `1px solid ${C.border}`, color: C.accent }}>
-                {lowKey ? `${curves[lowKey].draught} m` : "-"}
-              </span>
-            </div>
-            {renderPowerChart(lowKey, setHoverLow, rightMax)}
-           {(() => {
-  const d = deltaSummary(lowKey, hoverLow);
-
-  return d ? (
-    <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
-      Penalty at{" "}
-      <span style={{ color: C.textPrimary, fontWeight: 600 }}>
-        {d.spd} kn
-      </span>{" "}
-      <span style={{ color: C.critical, fontWeight: 700 }}>
-        +{d.delta.toLocaleString()} kW
-      </span>{" "}
-      <span style={{ color: C.warning, fontWeight: 600 }}>
-        (+{d.pct}%)
-      </span>{" "}
-      <span style={{ color: C.textMuted }}>
-        {d.brake.toLocaleString()} to {d.top.toLocaleString()} kW
-      </span>
-    </div>
-  ) : null;
-})()}
-          </div>
-
-          {/* Right - selectable draught (default highest) */}
-          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 16, background: "#ffffff" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, height: 34, flexWrap: "nowrap" }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
-                Compare draught
+          {/* Left - Comparison draught */}
+          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 12, background: "#ffffff" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, height: 32 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#1f2937" }}>
+                COMPARE
               </span>
               {draughtKeys.length > 1 ? (
                 <select value={rightKey || ""} onChange={e => setSelectedDraught(e.target.value)}
-                  style={{ padding: "4px 8px", borderRadius: 6, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary, fontSize: 11 }}>
+                  style={{ padding: "4px 8px", borderRadius: 6, background: "#f3f4f6", border: "1px solid #d1d5db", color: "#1f2937", fontSize: 10, fontWeight: 600 }}>
                   {sortedKeys.map(k => (
-                    <option key={k} value={k}>{curves[k].draught} m draught</option>
+                    <option key={k} value={k}>{curves[k].draught} m</option>
                   ))}
                 </select>
               ) : (
-                <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: C.accentDim, border: `1px solid ${C.border}`, color: C.accent }}>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 6, background: "#dbeafe", border: "1px solid #2563eb", color: "#2563eb" }}>
                   {rightKey ? `${curves[rightKey].draught} m` : "-"}
                 </span>
               )}
             </div>
             {renderPowerChart(rightKey, setHoverRight)}
-           {(() => {
-  const d = deltaSummary(rightKey, hoverRight);
+          </div>
 
-  return d ? (
-    <div style={{ marginTop: 8, fontSize: 11, color: C.textSecondary }}>
-      Penalty at{" "}
-      <span style={{ color: C.textPrimary, fontWeight: 600 }}>
-        {d.spd} kn
-      </span>{" "}
-      <span style={{ color: C.critical, fontWeight: 700 }}>
-        +{d.delta.toLocaleString()} kW
-      </span>{" "}
-      <span style={{ color: C.warning, fontWeight: 600 }}>
-        (+{d.pct}%)
-      </span>{" "}
-      <span style={{ color: C.textMuted }}>
-        {d.brake.toLocaleString()} to {d.top.toLocaleString()} kW
-      </span>
-    </div>
-  ) : null;
-})()}
+          {/* Middle - Fouling curve only */}
+          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 12, background: "#ffffff" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#1f2937", marginBottom: 10, height: 32, display: "flex", alignItems: "center" }}>
+              FOULING CURVE
+            </div>
+            {(() => {
+              const curve = curves[rightKey];
+              const data = buildChartData(rightKey);
+              if (!curve || data.length === 0) {
+                return <div style={{ height: isMobile ? 240 : 300, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280", fontSize: 12, border: "1px dashed #e5e7eb", borderRadius: 8 }}>No data</div>;
+              }
+              return (
+                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
+                  <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
+                    <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
+                    <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
+                    <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 10 }} labelFormatter={v => `${v} kn`} formatter={(value, name) => {
+                      if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean"];
+                      if (name === "fouled_power") return [`${value.toLocaleString()} kW`, "Fouled"];
+                      return null;
+                    }} />
+                    <Line type="monotone" dataKey="brake_power" stroke="#38bdf8" strokeWidth={2} dot={false} />
+                    {showFouled && displayedPenalty !== null && curve?.fouled_power && (
+                      <Line type="monotone" dataKey="fouled_power" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 3" dot={false} />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              );
+            })()}
+          </div>
+
+          {/* Right - Added resistance/weather only */}
+          <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 12, background: "#ffffff" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#1f2937", marginBottom: 10, height: 32, display: "flex", alignItems: "center" }}>
+              ADDED RESISTANCE
+            </div>
+            {(() => {
+              const curve = curves[rightKey];
+              const data = buildChartData(rightKey);
+              const added = addedResistanceData?.[rightKey];
+              const hasW = weatherApplied && !!added?.added_power_kW;
+              if (!curve || data.length === 0) {
+                return <div style={{ height: isMobile ? 240 : 300, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280", fontSize: 12, border: "1px dashed #e5e7eb", borderRadius: 8 }}>No data</div>;
+              }
+              return (
+                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
+                  <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
+                    <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
+                    <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
+                    <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 10 }} labelFormatter={v => `${v} kn`} formatter={(value, name) => {
+                      if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean"];
+                      if (name === "weather_power") return [`${value.toLocaleString()} kW`, "Weather"];
+                      return null;
+                    }} />
+                    <Line type="monotone" dataKey="brake_power" stroke="#38bdf8" strokeWidth={2} dot={false} />
+                    {hasW && (
+                      <Line type="monotone" dataKey="weather_power" stroke="#ea580c" strokeWidth={2} dot={false} />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </div>
         </div>
 
@@ -1342,14 +1352,14 @@ curvesPayload[key] = {
 
         {/* Penalty summary bar */}
         {displayedPenalty !== null && (
-          <div style={{ marginTop: 14, padding: "10px 16px", background: "rgba(239,68,68,0.06)", border: `1px solid rgba(239,68,68,0.2)`, borderRadius: 8, display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ marginTop: 14, padding: "10px 16px", background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 9, color: C.textMuted, letterSpacing: "0.08em" }}>AVG HULL PENALTY</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: C.critical }}>{displayedPenalty}%</div>
+              <div style={{ fontSize: 9, color: "#6b7280", letterSpacing: "0.08em", fontWeight: 700 }}>AVG HULL PENALTY</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#2563eb" }}>{displayedPenalty}%</div>
             </div>
-            <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.08)" }} />
-            <div style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>
-              Hull fouling will lead to <span style={{ color: C.critical, fontWeight: 700 }}>{displayedPenalty}% more power consumption on average</span>.
+            <div style={{ width: 1, height: 32, background: "#e5e7eb" }} />
+            <div style={{ fontSize: 11, color: "#6b7280", flex: 1, fontWeight: 500 }}>
+              Hull fouling will lead to <span style={{ color: "#2563eb", fontWeight: 700 }}>{displayedPenalty}% more power consumption on average</span>.
               {foulingMode === "custom"
                 ? " Based on custom idle-days input."
                 : " Switch to Hull Analysis to update values."}
@@ -2327,9 +2337,9 @@ function HullTab({ isMobile, imo, uploadedImages, setUploadedImages, sectionResu
                         style={{
                           padding: "8px 10px",
                           borderRadius: 6,
-                          background: "white",
+                          background: C.inputBg,
                           border: `1px solid ${C.border}`,
-                          color: "black",
+                          color: C.textPrimary,
                           fontSize: 12,
                         }}
                       />
@@ -2678,17 +2688,17 @@ function ReportsTab({ isMobile, imo, shipData }) {
         <div key={i} style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: 12, padding: "16px 18px",
-          background: "white", border: `1px solid black`,
+          background: C.cardSolid, border: `1px solid ${C.borderCard}`,
           borderRadius: 10, animation: `slideUp 0.3s ${i * 0.08}s both`,
-          flexWrap: "wrap", color: "black"
+          flexWrap: "wrap",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 8, background: C.accentDim, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
             </div>
             <div>
-              <div style={{ fontSize: 13, color: "black", fontWeight: 500 }}>{r.title}</div>
-              <div style={{ fontSize: 11, color: "black", marginTop: 2 }}>{r.date} - {r.type}</div>
+              <div style={{ fontSize: 13, color: C.textPrimary, fontWeight: 500 }}>{r.title}</div>
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{r.date} - {r.type}</div>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
