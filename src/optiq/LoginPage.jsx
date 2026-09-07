@@ -83,7 +83,7 @@ function LoginPage({ onLogin }) {
             fontWeight: '600',
             color: '#1f2937',
             letterSpacing: '0.3px'
-          }}>OPTIQ</div>
+          }}>OPTIQ - VESSEL PERFORMANCE PLATFORM</div>
         </div>
 
         {/* Divider Line */}
@@ -140,7 +140,7 @@ function LoginPage({ onLogin }) {
                 }
               }}
               required
-              placeholder="user@example.com"
+              placeholder="Username"
               style={{
                 width: '100%',
                 padding: '10px 14px',

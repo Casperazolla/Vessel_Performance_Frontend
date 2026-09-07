@@ -638,7 +638,7 @@ function DashboardTab({
             domain={forcedMax != null ? [0, forcedMax] : [0, sharedMax]}
             label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 11, fill: C.textMuted, offset: 10 }} />
           <Tooltip
-            contentStyle={{ background: C.cardSolid, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
+            contentStyle={{ background: "#ffffff", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }}
             labelFormatter={v => `${v} kn`}
             formatter={(value, name, props) => {
               const clean = props?.payload?.brake_power;
@@ -1156,9 +1156,9 @@ curvesPayload[key] = {
                     width: "100%",
                     padding: "10px",
                     borderRadius: 8,
-                    background: C.inputBg,
+                    background: "white",
                     border: `1px solid ${C.accent}`,
-                    color: C.textPrimary,
+                    color: "black",
                   }}
                 >
                   <option value="0">0 - Calm (glassy)</option>
@@ -1192,9 +1192,9 @@ curvesPayload[key] = {
                     width: "100%",
                     padding: "10px",
                     borderRadius: 8,
-                    background: C.inputBg,
+                    background: "white",
                     border: `1px solid ${C.accent}`,
-                    color: C.textPrimary,
+                    color: "black",
                   }}
                 >
                   <option value="1">1 - Calm</option>
@@ -1261,9 +1261,7 @@ curvesPayload[key] = {
           {/* Left - Comparison draught */}
           <div style={{ borderRadius: 12, border: "1px solid #e5e7eb", padding: 12, background: "#ffffff" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, height: 32 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#1f2937" }}>
-                COMPARE
-              </span>
+            
               {draughtKeys.length > 1 ? (
                 <select value={rightKey || ""} onChange={e => setSelectedDraught(e.target.value)}
                   style={{ padding: "4px 8px", borderRadius: 6, background: "#f3f4f6", border: "1px solid #d1d5db", color: "#1f2937", fontSize: 10, fontWeight: 600 }}>
