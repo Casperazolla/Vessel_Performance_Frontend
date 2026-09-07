@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { C, useMediaQuery, Logo } from "./shared";
-import FleetBenchmark from "/FleetBenchmark";
+import FleetBenchmark from "./Fleetbenchmark";
 
 function getFoulingConfig(idleDaysRaw) {
   const d = parseInt(idleDaysRaw, 10);
