@@ -31,6 +31,28 @@ const CAT_ORDER = Object.keys(BENCHMARKS);                 // ["B1" ... "B5"]
 const CAT_X = Object.fromEntries(CAT_ORDER.map((c, i) => [c, i + 1]));
 const BENCH = CAT_ORDER.map((c) => ({ cat: c, x: CAT_X[c], benchmark: BENCHMARKS[c] }));
 
+// Create step-wise benchmark data (start from Y-axis, then step)
+const BUILD_STEP_BENCH = () => {
+  const steps = [];
+  
+  // Start from Y-axis (x=0) at B1's benchmark level, going right to B1
+  steps.push({ x: 0, benchmark: BENCHMARKS.B1, cat: "B1", isStep: true });
+  
+  BENCH.forEach((b, i) => {
+    // Vertical line up to this benchmark value
+    steps.push({ x: b.x, benchmark: b.benchmark, cat: b.cat, isStep: true });
+    
+    // Horizontal line to next category (if not last)
+    if (i < BENCH.length - 1) {
+      const nextX = BENCH[i + 1].x;
+      steps.push({ x: nextX, benchmark: b.benchmark, cat: b.cat, isStep: true });
+    }
+  });
+  return steps;
+};
+
+const BENCH_STEPS = BUILD_STEP_BENCH();
+
 const first = (v) => (Array.isArray(v) ? v[0] : v);
 
 // Pull deadweight + category-type out of the run response's draught_curves.
@@ -188,9 +210,7 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
             Fleet Consumption vs Category Benchmark
           </div>
           <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
-            tpd at fleet design point
-            {ref.draught != null ? ` (${ref.draught} m` : " ("}
-            {ref.speed != null ? ` · ${ref.speed} kn)` : ")"} · one point per vessel
+            Fleet consumption benchmark comparison · one point per vessel
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={() => setShowBench((s) => !s)}>
@@ -244,9 +264,18 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
 
               {showBench && (
                 <Line
-                  data={BENCH} dataKey="benchmark" stroke={C.accent}
+                  data={BENCH_STEPS} dataKey="benchmark" stroke={C.accent}
                   strokeWidth={2} strokeDasharray="6 4"
-                  dot={{ r: 4, fill: C.accent, stroke: C.cardSolid, strokeWidth: 2 }}
+                  dot={(props) => {
+                    const { cx, cy, payload } = props;
+                    // Only show dots at actual category points (B1, B2, B3, B4, B5)
+                    if (!BENCH.some(b => b.x === payload.x && b.benchmark === payload.benchmark)) {
+                      return null;
+                    }
+                    return (
+                      <circle cx={cx} cy={cy} r={5} fill={C.accent} stroke={C.cardSolid} strokeWidth={2} />
+                    );
+                  }}
                   isAnimationActive={false} name="benchmark"
                 />
               )}

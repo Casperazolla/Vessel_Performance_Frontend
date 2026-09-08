@@ -599,10 +599,18 @@ function DashboardTab({
         fouled_power: fouledPower,
       };
 
+      // Calculate fouling penalty (difference between fouled and clean)
+      if (fouledPower !== null) {
+        row.fouling_penalty = fouledPower - brakePower;
+      }
+
       if (hasW) {
         const addedPower = added.added_power_kW[i] || 0;
         const base = fouledPower !== null ? fouledPower : brakePower;
         row.weather_power = Math.round(base + addedPower);
+        
+        // Calculate weather added (difference between weather and clean)
+        row.weather_added = row.weather_power - brakePower;
       }
       const upper = row.weather_power ?? row.fouled_power;
       if (upper != null) row.band = [brakePower, upper];
@@ -1296,11 +1304,11 @@ curvesPayload[key] = {
                     <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
                     <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
                     <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 10 }} labelFormatter={v => `${v} kn`} formatter={(value, name) => {
-                      if (name === "fouled_power") return [`${value.toLocaleString()} kW`, "Fouled"];
+                      if (name === "fouling_penalty") return [`${value.toLocaleString()} kW`, "Fouling Penalty"];
                       return null;
                     }} />
                     {showFouled && displayedPenalty !== null && curve?.fouled_power && (
-                      <Line type="monotone" dataKey="fouled_power" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 3" dot={false} />
+                      <Line type="monotone" dataKey="fouling_penalty" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 3" dot={false} />
                     )}
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -1328,11 +1336,11 @@ curvesPayload[key] = {
                     <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
                     <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
                     <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 10 }} labelFormatter={v => `${v} kn`} formatter={(value, name) => {
-                      if (name === "weather_power") return [`${value.toLocaleString()} kW`, "Weather"];
+                      if (name === "weather_added") return [`${value.toLocaleString()} kW`, "Weather Added"];
                       return null;
                     }} />
                     {hasW && (
-                      <Line type="monotone" dataKey="weather_power" stroke="#ea580c" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="weather_added" stroke="#ea580c" strokeWidth={2} dot={false} />
                     )}
                   </ComposedChart>
                 </ResponsiveContainer>
