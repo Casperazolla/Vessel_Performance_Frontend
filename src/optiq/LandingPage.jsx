@@ -198,15 +198,27 @@ function LandingPage({ onEnter, onLogout }) {
         return;
       }
 
-      const minFleetDraught = Math.min(...designRows.map((row) => row.draught));
-      const minFleetSpeed = Math.min(...designRows.map((row) => row.speed));
+      const designByImo = Object.fromEntries(designRows.map((row) => [row.imo, row]));
 
-      // Call analysis for each vessel with the SHARED fleet draught/speed
+      // Call analysis for each vessel with its own design draught/speed.
       const results = await Promise.all(
         fleetImos.map(async (fleetImo) => {
+          const design = designByImo[fleetImo];
+          if (!design) {
+            return {
+              imo: fleetImo,
+              status: "failed",
+              data: {
+                status: "failed",
+                message: "Design draught/speed not available for this vessel.",
+              },
+              fleet_reference: null,
+            };
+          }
+
           const json = await callRunAnalysis(fleetImo, {
-            fleetDraught: minFleetDraught,
-            fleetSpeed: minFleetSpeed,
+            fleetDraught: design.draught,
+            fleetSpeed: design.speed,
           });
 
           return {
@@ -214,8 +226,8 @@ function LandingPage({ onEnter, onLogout }) {
             status: json.status,
             data: json,
             fleet_reference: {
-              fleet_draught: minFleetDraught,
-              fleet_speed: minFleetSpeed,
+              fleet_draught: design.draught,
+              fleet_speed: design.speed,
             },
           };
         })

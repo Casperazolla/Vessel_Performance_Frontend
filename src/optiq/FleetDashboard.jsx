@@ -113,10 +113,12 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
     return vessel?.data?.draught_curves || {};
   };
 
-  const buildCurvesPayload = (imo) => {
+  const buildCurvesPayload = (imo, maps = {}) => {
     const cleanCurves = getCleanCurves(imo);
-    const fouledSource = customFouledCurvesByImo[imo] || null;
-    const addedSource = addedResistanceByImo[imo] || null;
+    const fouledMap = maps.fouledByImo || customFouledCurvesByImo;
+    const addedMap = maps.addedByImo || addedResistanceByImo;
+    const fouledSource = fouledMap[imo] || null;
+    const addedSource = addedMap[imo] || null;
 
     const payload = {};
     Object.keys(cleanCurves).forEach((key) => {
@@ -135,7 +137,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
     return payload;
   };
 
-  const fetchFuelForFleet = async () => {
+  const fetchFuelForFleet = async (maps = {}) => {
     if (ok.length === 0) return;
 
     setFuelLoading(true);
@@ -148,7 +150,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               imo: item.imo,
-              curves: buildCurvesPayload(item.imo),
+              curves: buildCurvesPayload(item.imo, maps),
             }),
           });
 
@@ -191,8 +193,9 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
         })
       );
 
-      setCustomFouledCurvesByImo(Object.fromEntries(entries));
-      await fetchFuelForFleet();
+      const nextFouledByImo = Object.fromEntries(entries);
+      setCustomFouledCurvesByImo(nextFouledByImo);
+      await fetchFuelForFleet({ fouledByImo: nextFouledByImo, addedByImo: addedResistanceByImo });
     } catch (e) {
       console.error(e);
       setError("Unable to apply custom fouling for fleet.");
@@ -219,8 +222,9 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
         })
       );
 
-      setAddedResistanceByImo(Object.fromEntries(entries));
-      await fetchFuelForFleet();
+      const nextAddedByImo = Object.fromEntries(entries);
+      setAddedResistanceByImo(nextAddedByImo);
+      await fetchFuelForFleet({ fouledByImo: customFouledCurvesByImo, addedByImo: nextAddedByImo });
     } catch (e) {
       console.error(e);
       setError("Unable to apply custom weather for fleet.");
@@ -330,7 +334,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
               placeholder="Idle Days"
               value={customIdleDays}
               onChange={(e) => { setCustomIdleDays(e.target.value); setIntensity(""); }}
-              style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: C.textPrimary }}
+              style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: "black" }}
             />
             {foulingCfg.needsIntensity ? (
               <select

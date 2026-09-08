@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  ResponsiveContainer,
 } from "recharts";
 import { C } from "./shared";
 
@@ -106,12 +106,23 @@ function xWithinCategoryBand(cat, dwt) {
   return i + ratio;
 }
 
-// Shared fleet operating point (min design draught/speed), carried on each result.
-function fleetRef(ok) {
-  const v = ok.find((x) => x?.fleet_reference || x?.data?.fleet_draught != null);
-  const fr = v?.fleet_reference || {};
-  const d = Number(fr.fleet_draught ?? v?.data?.fleet_draught);
-  const s = Number(fr.fleet_speed ?? v?.data?.fleet_speed);
+// Resolve design operating point per vessel.
+function vesselRef(vessel) {
+  const fr = vessel?.fleet_reference || {};
+  const d = Number(
+    fr.fleet_draught ??
+    fr.design_draught ??
+    vessel?.data?.fleet_draught ??
+    vessel?.data?.design_draught ??
+    vessel?.data?.DESIGN_DRAUGHT
+  );
+  const s = Number(
+    fr.fleet_speed ??
+    fr.design_speed ??
+    vessel?.data?.fleet_speed ??
+    vessel?.data?.design_speed ??
+    vessel?.data?.DESIGN_SPEED
+  );
   return { draught: Number.isFinite(d) ? d : null, speed: Number.isFinite(s) ? s : null };
 }
 
@@ -124,7 +135,7 @@ function nearestIndex(arr, target) {
   return best;
 }
 
-// tpd for one vessel at the fleet design draught + speed (falls back to
+// tpd for one vessel at that vessel's design draught + speed (falls back to
 // highest draught / highest speed if the reference point is missing).
 function tpdAtDesign(fuelData, ref) {
   const recs = Object.values(fuelData || {}).filter(
@@ -148,10 +159,15 @@ function tpdAtDesign(fuelData, ref) {
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
-  const p = payload[0].payload;
+  const vesselEntry = payload.find((entry) => entry?.payload?.imo);
+  const fallbackEntry = payload.find((entry) => entry?.payload?.cat);
+  const p = (vesselEntry || fallbackEntry)?.payload;
+  if (!p) return null;
   const box = {
     background: "white", border: `1px solid ${C.border}`,
     borderRadius: 8, padding: "10px 12px", fontSize: 11, color: "black",
+    boxShadow: "0 8px 20px rgba(15, 23, 42, 0.12)",
+    transition: "opacity 160ms ease, transform 160ms ease",
   };
 
   if (p.imo) {
@@ -181,16 +197,16 @@ function CustomTooltip({ active, payload }) {
 
 function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const [showBench, setShowBench] = useState(true);
+  const [selectedPoint, setSelectedPoint] = useState(null);
 
-  const { vessels, skipped, ref } = useMemo(() => {
-    const ref = fleetRef(ok);
+  const { vessels, skipped } = useMemo(() => {
     const resolved = [];
     const missing = [];
 
     ok.forEach((v) => {
       const { dwt, catType } = getDwtInfo(v);
       const cat = resolveCategory(dwt, catType);
-      const tpd = tpdAtDesign(fuelByImo[v.imo], ref);
+      const tpd = tpdAtDesign(fuelByImo[v.imo], vesselRef(v));
       const benchmark = cat ? BENCHMARKS[cat] : null;
 
       if (cat == null || tpd == null || benchmark == null) {
@@ -210,11 +226,30 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
       };
     });
 
-    return { vessels, skipped: missing, ref };
+    return { vessels, skipped: missing };
   }, [ok, fuelByImo]);
 
   const over = vessels.filter((v) => v.over);
   const under = vessels.filter((v) => !v.over);
+
+  const handleVesselPointClick = (point) => {
+    const p = point?.payload?.imo ? point.payload : point?.imo ? point : null;
+    if (!p) return;
+    setSelectedPoint(p);
+  };
+
+  const handleChartClick = (state) => {
+    const clicked = (state?.activePayload || [])
+      .map((entry) => entry?.payload)
+      .find((p) => p?.imo);
+    if (clicked) {
+      setSelectedPoint(clicked);
+      return;
+    }
+    if (!state?.activePayload?.length) {
+      setSelectedPoint(null);
+    }
+  };
 
   const maxY = Math.max(0, ...BENCH.map((b) => b.benchmark), ...vessels.map((v) => v.tpd));
   const yMax = Math.ceil((maxY + 5) / 5) * 5 || 10;
@@ -263,8 +298,18 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
             </span>
           </div>
 
+          <div style={{ marginBottom: 8, fontSize: 11, color: C.textMuted }}>
+            Click a vessel point to view details. Click empty chart space to clear selection.
+          </div>
+
+          {selectedPoint && (
+            <div style={{ marginBottom: 10, display: "inline-block" }}>
+              <CustomTooltip active payload={[{ payload: selectedPoint }]} />
+            </div>
+          )}
+
           <ResponsiveContainer width="100%" height={360}>
-            <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }}>
+            <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }} onClick={handleChartClick}>
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
               <XAxis
                 type="number" dataKey="x"
@@ -279,7 +324,6 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
                 tick={{ fontSize: 10, fill: C.textMuted }} width={52}
                 label={{ value: "Consumption (tpd)", angle: -90, position: "insideLeft", fontSize: 12, fill: C.textMuted, offset: 8 }}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.15)" }} />
 
               {showBench && (
                 <Line
@@ -290,8 +334,8 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
                 />
               )}
 
-              <Scatter data={under} dataKey="tpd" fill={C.success} />
-              <Scatter data={over} dataKey="tpd" fill={C.critical} />
+              <Scatter data={under} dataKey="tpd" fill={C.success} onClick={handleVesselPointClick} />
+              <Scatter data={over} dataKey="tpd" fill={C.critical} onClick={handleVesselPointClick} />
             </ComposedChart>
           </ResponsiveContainer>
 
