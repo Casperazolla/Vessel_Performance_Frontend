@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid,
-  ResponsiveContainer,
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 import { C } from "./shared";
 
@@ -165,7 +165,7 @@ function CustomTooltip({ active, payload }) {
   if (!p) return null;
   const box = {
     background: "white", border: `1px solid ${C.border}`,
-    borderRadius: 8, padding: "10px 12px", fontSize: 11, color: "black",
+    borderRadius: 8, padding: "10px 12px", fontSize: 11, color: "#0f172a",
     boxShadow: "0 8px 20px rgba(15, 23, 42, 0.12)",
     transition: "opacity 160ms ease, transform 160ms ease",
   };
@@ -173,10 +173,10 @@ function CustomTooltip({ active, payload }) {
   if (p.imo) {
     return (
       <div style={box}>
-        <div style={{ color: "black", fontWeight: 700, marginBottom: 4 }}>IMO {p.imo}</div>
+        <div style={{ color: "#0f172a", fontWeight: 700, marginBottom: 4 }}>IMO {p.imo}</div>
         <div>Category: <span style={{ color: C.accent }}>{p.cat}</span>{p.dwt ? ` · ${Math.round(p.dwt).toLocaleString()} DWT` : ""}</div>
-        <div>Consumption: <span style={{ color: C.textPrimary }}>{p.tpd.toFixed(2)} tpd</span></div>
-        <div>Benchmark: {p.benchmark.toFixed(2)} tpd</div>
+        <div>Consumption: <span style={{ color: "#0f172a", fontWeight: 600 }}>{p.tpd.toFixed(2)} tpd</span></div>
+        <div>Benchmark: <span style={{ color: "#0f172a", fontWeight: 600 }}>{p.benchmark.toFixed(2)} tpd</span></div>
         <div style={{ marginTop: 4, color: p.over ? C.critical : C.success, fontWeight: 700 }}>
           {p.over ? "+" : ""}{p.deltaPct}% vs benchmark
         </div>
@@ -186,7 +186,7 @@ function CustomTooltip({ active, payload }) {
   return (
     <div style={box}>
       <div style={{ color: C.accent, fontWeight: 700, marginBottom: 4 }}>Category {p.cat}</div>
-      <div>Benchmark: <span style={{ color: "black" }}>{p.benchmark.toFixed(2)} tpd</span></div>
+      <div>Benchmark: <span style={{ color: "#0f172a", fontWeight: 600 }}>{p.benchmark.toFixed(2)} tpd</span></div>
     </div>
   );
 }
@@ -299,7 +299,7 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
           </div>
 
           <div style={{ marginBottom: 8, fontSize: 11, color: C.textMuted }}>
-            Click a vessel point to view details. Click empty chart space to clear selection.
+            Hover or click a vessel point to view details. Click empty chart space to clear selection.
           </div>
 
           {selectedPoint && (
@@ -323,6 +323,11 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
                 type="number" domain={[0, yMax]}
                 tick={{ fontSize: 10, fill: C.textMuted }} width={52}
                 label={{ value: "Consumption (tpd)", angle: -90, position: "insideLeft", fontSize: 12, fill: C.textMuted, offset: 8 }}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                shared={false}
+                cursor={{ stroke: "rgba(15, 23, 42, 0.2)", strokeWidth: 1 }}
               />
 
               {showBench && (
