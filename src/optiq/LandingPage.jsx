@@ -122,77 +122,10 @@ function LandingPage({ onEnter, onLogout }) {
     setErr("");
   };
 
-  const handleAnalyze = async (e) => {
+  // ======= FIX 2 & 3: Separate handlers for SINGLE and FLEET =======
+  const handleAnalyzeSingle = async (e) => {
     e?.preventDefault();
 
-    // ---------- FLEET MODE ----------
-    if (analysisMode === "fleet") {
-      if (fleetImos.length === 0) {
-        setErr("Add at least one IMO for fleet analysis");
-        return;
-      }
-      setErr("");
-      setLoading(true);
-      try {
-        const designResp = await fetchFleetDesignParams(fleetImos);
-
-        if (designResp.status !== "success") {
-          setErr(designResp.message || "Unable to read design draught/speed for fleet IMOs.");
-          setLoading(false);
-          return;
-        }
-
-        const perVessel = designResp.per_vessel || {};
-
-        const designRows = fleetImos
-          .map((fleetImo) => {
-            const dp = perVessel[fleetImo] || {};
-            return {
-              imo: fleetImo,
-              draught: toFiniteNumber(dp.design_draught),
-              speed: toFiniteNumber(dp.design_speed),
-            };
-          })
-          .filter((row) => row.draught != null && row.speed != null);
-
-        if (designRows.length === 0) {
-          setErr("Unable to read design draught/speed for fleet IMOs.");
-          setLoading(false);
-          return;
-        }
-
-        const minFleetDraught = Math.min(...designRows.map((row) => row.draught));
-        const minFleetSpeed = Math.min(...designRows.map((row) => row.speed));
-
-        const results = await Promise.all(
-          fleetImos.map(async (fleetImo) => {
-            const json = await callRunAnalysis(fleetImo, {
-              fleetDraught: minFleetDraught,
-              fleetSpeed: minFleetSpeed,
-            });
-
-            return {
-              imo: fleetImo,
-              status: json.status,
-              data: json,
-              fleet_reference: {
-                fleet_draught: minFleetDraught,
-                fleet_speed: minFleetSpeed,
-              },
-            };
-          })
-        );
-
-        onEnter(fleetImos, results, "fleet");
-      } catch (error) {
-        console.error(error);
-        setErr("Server error");
-      }
-      setLoading(false);
-      return;
-    }
-
-    // ---------- SINGLE MODE ----------
     const targetImo = imo.trim();
 
     if (!targetImo) {
@@ -218,6 +151,79 @@ function LandingPage({ onEnter, onLogout }) {
       }
     } catch (error) {
       console.error(" ERROR:", error);
+      setErr("Server error");
+    }
+
+    setLoading(false);
+  };
+
+  // ======= FIX 3: Fleet analysis API called ONLY ONCE when button clicked =======
+  const handleAnalyzeFleet = async (e) => {
+    e?.preventDefault();
+
+    if (fleetImos.length === 0) {
+      setErr("Add at least one IMO for fleet analysis");
+      return;
+    }
+    
+    setErr("");
+    setLoading(true);
+    
+    try {
+      // SINGLE API CALL for all IMOs (called only once after all IMOs are added)
+      const designResp = await fetchFleetDesignParams(fleetImos);
+
+      if (designResp.status !== "success") {
+        setErr(designResp.message || "Unable to read design draught/speed for fleet IMOs.");
+        setLoading(false);
+        return;
+      }
+
+      const perVessel = designResp.per_vessel || {};
+
+      const designRows = fleetImos
+        .map((fleetImo) => {
+          const dp = perVessel[fleetImo] || {};
+          return {
+            imo: fleetImo,
+            draught: toFiniteNumber(dp.design_draught),
+            speed: toFiniteNumber(dp.design_speed),
+          };
+        })
+        .filter((row) => row.draught != null && row.speed != null);
+
+      if (designRows.length === 0) {
+        setErr("Unable to read design draught/speed for fleet IMOs.");
+        setLoading(false);
+        return;
+      }
+
+      const minFleetDraught = Math.min(...designRows.map((row) => row.draught));
+      const minFleetSpeed = Math.min(...designRows.map((row) => row.speed));
+
+      // Call analysis for each vessel with the SHARED fleet draught/speed
+      const results = await Promise.all(
+        fleetImos.map(async (fleetImo) => {
+          const json = await callRunAnalysis(fleetImo, {
+            fleetDraught: minFleetDraught,
+            fleetSpeed: minFleetSpeed,
+          });
+
+          return {
+            imo: fleetImo,
+            status: json.status,
+            data: json,
+            fleet_reference: {
+              fleet_draught: minFleetDraught,
+              fleet_speed: minFleetSpeed,
+            },
+          };
+        })
+      );
+
+      onEnter(fleetImos, results, "fleet");
+    } catch (error) {
+      console.error(error);
       setErr("Server error");
     }
 
@@ -368,6 +374,7 @@ function LandingPage({ onEnter, onLogout }) {
               }}>⊞ Detailed Performance Analysis</span>
             </div>
 
+            {/* ======= FIX 2: Mode toggles =======*/}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <button
                 type="button"
@@ -375,8 +382,8 @@ function LandingPage({ onEnter, onLogout }) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: 8,
-                  border: `1px solid ${analysisMode === "single" ? "#141414" : "#f9f9fa"}`,
-                  background: analysisMode === "single" ? "#FFFFFF" : "#F8FAFC",
+                  border: `1px solid ${analysisMode === "single" ? "#000000" : "transparent"}`,
+                  background: analysisMode === "single" ? "#ffffff" : "transparent",
                   color: analysisMode === "single" ? "#0F172A" : "#64748B",
                   cursor: "pointer",
                   fontSize: 12,
@@ -385,7 +392,7 @@ function LandingPage({ onEnter, onLogout }) {
                   textTransform: "uppercase",
                 }}
               >
-                SINGLE VESSEL ANALYSIS
+                SINGLE VESSEL
               </button>
               <button
                 type="button"
@@ -393,8 +400,8 @@ function LandingPage({ onEnter, onLogout }) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: 8,
-                  border: `1px solid ${analysisMode === "fleet" ? "#141414" : "#F8FAFC"}`,
-                  background: analysisMode === "fleet" ? "#FFFFFF" : "#F8FAFC",
+                  border: `1px solid ${analysisMode === "fleet" ? "#000000" : "transparent"}`,
+                  background: analysisMode === "fleet" ? "#ffffff" : "transparent",
                   color: analysisMode === "fleet" ? "#0F172A" : "#64748B",
                   cursor: "pointer",
                   fontSize: 12,
@@ -410,7 +417,7 @@ function LandingPage({ onEnter, onLogout }) {
 
           <div style={{ height: 1, background: "#2d5a8c", margin: "16px 0 24px" }} />
 
-          <div style={{ fontSize: 13, color: "#cbd5e1", marginBottom: 10 }}>Enter IMO Number</div>
+          <div style={{ fontSize: 13, color: "#000000", marginBottom: 10 }}>Enter IMO Number</div>
           <input
             type="text"
             maxLength={7}
@@ -419,7 +426,7 @@ function LandingPage({ onEnter, onLogout }) {
                 if (analysisMode === "fleet") {
                   addFleetImo();
                 } else {
-                  handleAnalyze();
+                  handleAnalyzeSingle();
                 }
               }
             }}
@@ -451,8 +458,8 @@ function LandingPage({ onEnter, onLogout }) {
                     padding: "10px 14px",
                     borderRadius: 6,
                     border: "none",
-                    background: (!isValidImo(imo) || loading) ? "#4b7ba7" : "#E2E8F0",
-                    color: "#1E293B",
+                    background: (!isValidImo(imo) || loading) ? "#4b7ba7" : "#3b82f6",
+                    color: "#fff",
                     fontSize: 12,
                     fontWeight: 700,
                     cursor: (!isValidImo(imo) || loading) ? "not-allowed" : "pointer",
@@ -488,43 +495,84 @@ function LandingPage({ onEnter, onLogout }) {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={handleAnalyze}
-            disabled={loading || (analysisMode === "fleet" && fleetImos.length === 0)}
-            style={{
-              width: "100%",
-              padding: "13px",
-              background: loading ? "#4b7ba7" : "#1D4ED8",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              cursor: (loading || (analysisMode === "fleet" && fleetImos.length === 0)) ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              transition: "all 0.25s",
-              marginBottom: 20,
-            }}
-          >
-            {loading ? (
-              <>
-                <span style={{
-                  width: 14,
-                  height: 14,
-                  border: "2px solid rgba(255,255,255,0.3)",
-                  borderTop: "2px solid #fff",
-                  borderRadius: "50%",
-                  animation: "spin 0.7s linear infinite",
-                  display: "inline-block",
-                }} /> Analyzing</>
-            ) : (analysisMode === "fleet" ? "ANALYZE FLEET" : "ANALYZE VESSEL")}
-          </button>
+          {/* ======= FIX 2: TWO SEPARATE BUTTONS =======*/}
+          {analysisMode === "single" ? (
+            <button
+              type="button"
+              onClick={handleAnalyzeSingle}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "13px",
+                background: loading ? "#4b7ba7" : "#1D4ED8",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                cursor: loading ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                transition: "all 0.25s",
+                marginBottom: 20,
+              }}
+            >
+              {loading ? (
+                <>
+                  <span style={{
+                    width: 14,
+                    height: 14,
+                    border: "2px solid rgba(255,255,255,0.3)",
+                    borderTop: "2px solid #fff",
+                    borderRadius: "50%",
+                    animation: "spin 0.7s linear infinite",
+                    display: "inline-block",
+                  }} /> Analyzing</>
+              ) : "ANALYZE VESSEL"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAnalyzeFleet}
+              disabled={loading || fleetImos.length === 0}
+              style={{
+                width: "100%",
+                padding: "13px",
+                background: loading || fleetImos.length === 0 ? "#4b7ba7" : "#1D4ED8",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                cursor: (loading || fleetImos.length === 0) ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                transition: "all 0.25s",
+                marginBottom: 20,
+              }}
+            >
+              {loading ? (
+                <>
+                  <span style={{
+                    width: 14,
+                    height: 14,
+                    border: "2px solid rgba(255,255,255,0.3)",
+                    borderTop: "2px solid #fff",
+                    borderRadius: "50%",
+                    animation: "spin 0.7s linear infinite",
+                    display: "inline-block",
+                  }} /> Analyzing</>
+              ) : "ANALYZE FLEET"}
+            </button>
+          )}
 
           <div style={{ textAlign: "center" }}>
             <a onClick={() => {

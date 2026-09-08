@@ -1296,11 +1296,9 @@ curvesPayload[key] = {
                     <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
                     <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
                     <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 10 }} labelFormatter={v => `${v} kn`} formatter={(value, name) => {
-                      if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean"];
                       if (name === "fouled_power") return [`${value.toLocaleString()} kW`, "Fouled"];
                       return null;
                     }} />
-                    <Line type="monotone" dataKey="brake_power" stroke="#38bdf8" strokeWidth={2} dot={false} />
                     {showFouled && displayedPenalty !== null && curve?.fouled_power && (
                       <Line type="monotone" dataKey="fouled_power" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 3" dot={false} />
                     )}
@@ -1330,11 +1328,9 @@ curvesPayload[key] = {
                     <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
                     <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
                     <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 10 }} labelFormatter={v => `${v} kn`} formatter={(value, name) => {
-                      if (name === "brake_power") return [`${value.toLocaleString()} kW`, "Clean"];
                       if (name === "weather_power") return [`${value.toLocaleString()} kW`, "Weather"];
                       return null;
                     }} />
-                    <Line type="monotone" dataKey="brake_power" stroke="#38bdf8" strokeWidth={2} dot={false} />
                     {hasW && (
                       <Line type="monotone" dataKey="weather_power" stroke="#ea580c" strokeWidth={2} dot={false} />
                     )}

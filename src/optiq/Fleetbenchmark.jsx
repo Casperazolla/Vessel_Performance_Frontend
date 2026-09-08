@@ -105,14 +105,14 @@ function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   const box = {
-    background: C.cardSolid, border: `1px solid ${C.border}`,
-    borderRadius: 8, padding: "10px 12px", fontSize: 11, color: C.textSecondary,
+    background: "white", border: `1px solid ${C.border}`,
+    borderRadius: 8, padding: "10px 12px", fontSize: 11, color: "black",
   };
 
   if (p.imo) {
     return (
       <div style={box}>
-        <div style={{ color: C.textPrimary, fontWeight: 700, marginBottom: 4 }}>IMO {p.imo}</div>
+        <div style={{ color: "black", fontWeight: 700, marginBottom: 4 }}>IMO {p.imo}</div>
         <div>Category: <span style={{ color: C.accent }}>{p.cat}</span>{p.dwt ? ` · ${Math.round(p.dwt).toLocaleString()} DWT` : ""}</div>
         <div>Consumption: <span style={{ color: C.textPrimary }}>{p.tpd.toFixed(2)} tpd</span></div>
         <div>Benchmark: {p.benchmark.toFixed(2)} tpd</div>
@@ -125,7 +125,7 @@ function CustomTooltip({ active, payload }) {
   return (
     <div style={box}>
       <div style={{ color: C.accent, fontWeight: 700, marginBottom: 4 }}>Category {p.cat}</div>
-      <div>Benchmark: <span style={{ color: C.textPrimary }}>{p.benchmark.toFixed(2)} tpd</span></div>
+      <div>Benchmark: <span style={{ color: "black" }}>{p.benchmark.toFixed(2)} tpd</span></div>
     </div>
   );
 }
@@ -180,11 +180,11 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const yMax = Math.ceil((maxY + 5) / 5) * 5 || 10;
 
   return (
-    <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
+    <div style={{ background: "white", border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 13, color: C.textPrimary, fontWeight: 700 }}>
+          <div style={{ fontSize: 13, color: "black", fontWeight: 700 }}>
             Fleet Consumption vs Category Benchmark
           </div>
           <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
@@ -227,8 +227,7 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
 
           <ResponsiveContainer width="100%" height={360}>
             <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.10)" strokeDasharray="4 3" />
-              <XAxis
+<CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />              <XAxis
                 type="number" dataKey="x"
                 domain={[0.5, CAT_ORDER.length + 0.5]}
                 ticks={CAT_ORDER.map((_, i) => i + 1)}

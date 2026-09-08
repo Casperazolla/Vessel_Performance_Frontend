@@ -285,7 +285,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: C.mainBg }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#f5f7fa" }}>
       {/* Top bar - no nav tabs, dashboard only */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -313,14 +313,14 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
       <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 14 : 22, display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0,1fr))", gap: 10 }}>
           {summary.map((item) => (
-            <div key={item.label} style={{ border: `1px solid ${C.borderCard}`, borderRadius: 12, background: C.statBg, padding: "12px 14px" }}>
+            <div key={item.label} style={{ border: `1px solid ${C.borderCard}`, borderRadius: 12, background: "white", padding: "12px 14px" }}>
               <div style={{ color: C.textMuted, fontSize: 11 }}>{item.label}</div>
               <div style={{ color: item.color, fontSize: 18, fontWeight: 700, marginTop: 4 }}>{item.value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
+        <div style={{ background: "white", border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
           <div style={{ fontSize: 12, color: C.accent, marginBottom: 8, letterSpacing: "0.08em" }}>FOULING CURVE</div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 2fr 1fr", gap: 12, alignItems: "center" }}>
             <input
@@ -330,13 +330,13 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
               placeholder="Idle Days"
               value={customIdleDays}
               onChange={(e) => { setCustomIdleDays(e.target.value); setIntensity(""); }}
-              style={{ padding: "10px", borderRadius: 8, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary }}
+              style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: C.textPrimary }}
             />
             {foulingCfg.needsIntensity ? (
               <select
                 value={intensity}
                 onChange={(e) => setIntensity(e.target.value)}
-                style={{ padding: "10px", borderRadius: 8, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary }}
+                style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: C.textPrimary }}
               >
                 <option value="">Fouling Intensity</option>
                 {foulingCfg.options.map((o) => (
@@ -348,7 +348,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
                 readOnly
                 value={foulingCfg.valid ? `Auto - Grade ${foulingCfg.grade}` : ""}
                 placeholder="Fouling Intensity"
-                style={{ padding: "10px", borderRadius: 8, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textMuted }}
+                style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: C.textMuted }}
               />
             )}
             <button
@@ -371,13 +371,13 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
           {foulingCfg.note && <div style={{ marginTop: 8, fontSize: 11, color: C.textMuted }}>{foulingCfg.note}</div>}
         </div>
 
-        <div style={{ background: C.cardSolid, border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
+        <div style={{ background: "white", border: `1px solid ${C.borderCard}`, borderRadius: 14, padding: 16 }}>
           <div style={{ fontSize: 12, color: C.accent, marginBottom: 8, letterSpacing: "0.08em" }}>ADDED POWER (CUSTOM)</div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 2fr 1fr", gap: 12, alignItems: "center" }}>
             <select
               value={seaState}
               onChange={(e) => setSeaState(e.target.value)}
-              style={{ padding: "10px", borderRadius: 8, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary }}
+              style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: "black" }}
             >
               <option value="0">0 - Calm (glassy)</option>
               <option value="1">1 - Calm (rippled)</option>
@@ -392,7 +392,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
             <select
               value={weatherState}
               onChange={(e) => setWeatherState(e.target.value)}
-              style={{ padding: "10px", borderRadius: 8, background: C.inputBg, border: `1px solid ${C.border}`, color: C.textPrimary }}
+              style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: "black" }}
             >
               <option value="1">1 - Calm</option>
               <option value="2">2</option>
@@ -427,7 +427,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
           <div style={{ fontSize: 12, color: C.textSecondary }}>
             Fleet fuel tables are shown draught-wise with Speed on X-axis and IMO rows on Y-axis.
           </div>
-          <button
+          {/* <button
             onClick={fetchFuelForFleet}
             disabled={fuelLoading}
             style={{
@@ -442,7 +442,7 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
             }}
           >
             {fuelLoading ? "Refreshing..." : "Refresh Fuel Tables"}
-          </button>
+          </button> */}
         </div>
 
         {error && (
