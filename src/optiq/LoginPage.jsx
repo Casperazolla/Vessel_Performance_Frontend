@@ -129,7 +129,7 @@ function LoginPage({ onLogin }) {
               fontWeight: '500',
               color: '#374151',
               marginBottom: '8px'
-            }}>Email Address</label>
+            }}>Username</label>
             <input
               type="text"
               value={username}
@@ -140,7 +140,7 @@ function LoginPage({ onLogin }) {
                 }
               }}
               required
-              placeholder="Username"
+              placeholder="azolla"
               style={{
                 width: '100%',
                 padding: '10px 14px',
@@ -148,7 +148,7 @@ function LoginPage({ onLogin }) {
                 border: '1px solid #e5e7eb',
                 borderRadius: '6px',
                 background: '#f9fafb',
-                color: '#374151',
+                color: '#484c52',
                 boxSizing: 'border-box',
                 fontWeight: '400',
                 transition: 'all 0.2s',

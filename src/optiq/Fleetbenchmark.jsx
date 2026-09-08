@@ -16,11 +16,11 @@ const BENCHMARKS = { B1: 13.663, B2: 24.266, B3: 29.95, B4: 32.813, B5: 56.203 }
 // a B1–B5 label. A vessel falls in the first band whose maxDwt it doesn't exceed.
 // >>> replace with your real DWT thresholds if you need the fallback <<<
 const CATEGORY_BANDS = [
-  { cat: "B1", maxDwt: 30000 },
-  { cat: "B2", maxDwt: 55000 },
-  { cat: "B3", maxDwt: 80000 },
-  { cat: "B4", maxDwt: 150000 },
-  { cat: "B5", maxDwt: 400000 },
+  { cat: "B1", minDwt: 0, maxDwt: 30000 },
+  { cat: "B2", minDwt: 30000, maxDwt: 55000 },
+  { cat: "B3", minDwt: 55000, maxDwt: 80000 },
+  { cat: "B4", minDwt: 80000, maxDwt: 150000 },
+  { cat: "B5", minDwt: 150000, maxDwt: 400000 },
 ];
 
 /* ============================================================
@@ -28,25 +28,32 @@ const CATEGORY_BANDS = [
    ============================================================ */
 
 const CAT_ORDER = Object.keys(BENCHMARKS);                 // ["B1" ... "B5"]
-const CAT_X = Object.fromEntries(CAT_ORDER.map((c, i) => [c, i + 1]));
-const BENCH = CAT_ORDER.map((c) => ({ cat: c, x: CAT_X[c], benchmark: BENCHMARKS[c] }));
+const CAT_INDEX = Object.fromEntries(CAT_ORDER.map((c, i) => [c, i]));
+const BAND_BY_CAT = Object.fromEntries(CATEGORY_BANDS.map((b) => [b.cat, b]));
+const BENCH = CAT_ORDER.map((c, i) => ({
+  cat: c,
+  xStart: i,
+  xEnd: i + 1,
+  benchmark: BENCHMARKS[c],
+}));
 
 // Create step-wise benchmark data (start from Y-axis, then step)
 const BUILD_STEP_BENCH = () => {
   const steps = [];
-  
-  // Start from Y-axis (x=0) at B1's benchmark level, going right to B1
-  steps.push({ x: 0, benchmark: BENCHMARKS.B1, cat: "B1", isStep: true });
-  
+
   BENCH.forEach((b, i) => {
-    // Vertical line up to this benchmark value
-    steps.push({ x: b.x, benchmark: b.benchmark, cat: b.cat, isStep: true });
-    
-    // Horizontal line to next category (if not last)
-    if (i < BENCH.length - 1) {
-      const nextX = BENCH[i + 1].x;
-      steps.push({ x: nextX, benchmark: b.benchmark, cat: b.cat, isStep: true });
+    if (i === 0) {
+      // B1 starts at x=0 and stays flat until the first boundary.
+      steps.push({ x: b.xStart, benchmark: b.benchmark, cat: b.cat, isStep: true });
+      steps.push({ x: b.xEnd, benchmark: b.benchmark, cat: b.cat, isStep: true });
+      return;
     }
+
+    const prev = BENCH[i - 1];
+    // Vertical transition at category boundary, then horizontal in new band.
+    steps.push({ x: b.xStart, benchmark: prev.benchmark, cat: prev.cat, isStep: true });
+    steps.push({ x: b.xStart, benchmark: b.benchmark, cat: b.cat, isStep: true });
+    steps.push({ x: b.xEnd, benchmark: b.benchmark, cat: b.cat, isStep: true });
   });
   return steps;
 };
@@ -81,6 +88,22 @@ function resolveCategory(dwt, catType) {
   if (dwt == null) return null;
   for (const b of CATEGORY_BANDS) if (dwt <= b.maxDwt) return b.cat;
   return CAT_ORDER[CAT_ORDER.length - 1];
+}
+
+function xWithinCategoryBand(cat, dwt) {
+  const i = CAT_INDEX[cat];
+  if (!Number.isInteger(i)) return null;
+
+  const band = BAND_BY_CAT[cat];
+  if (!band || !Number.isFinite(dwt)) return i + 0.5;
+
+  const span = Number(band.maxDwt) - Number(band.minDwt);
+  if (!Number.isFinite(span) || span <= 0) return i + 0.5;
+
+  const rawRatio = (Number(dwt) - Number(band.minDwt)) / span;
+  // Keep points visibly inside the band and avoid exact overlap on boundaries.
+  const ratio = Math.max(0.02, Math.min(0.98, rawRatio));
+  return i + ratio;
 }
 
 // Shared fleet operating point (min design draught/speed), carried on each result.
@@ -177,19 +200,14 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
       resolved.push({ imo: v.imo, dwt, cat, tpd, benchmark });
     });
 
-    // spread same-category vessels so their dots don't stack on one X
-    const grouped = {};
-    resolved.forEach((r) => { (grouped[r.cat] ||= []).push(r); });
-
-    const vessels = [];
-    Object.entries(grouped).forEach(([cat, arr]) => {
-      const base = CAT_X[cat];
-      const n = arr.length;
-      arr.forEach((r, i) => {
-        const spread = n > 1 ? (i - (n - 1) / 2) * 0.16 : 0;
-        const deltaPct = r.benchmark > 0 ? Math.round(((r.tpd - r.benchmark) / r.benchmark) * 1000) / 10 : 0;
-        vessels.push({ ...r, x: base + spread, over: r.tpd > r.benchmark, deltaPct });
-      });
+    const vessels = resolved.map((r) => {
+      const deltaPct = r.benchmark > 0 ? Math.round(((r.tpd - r.benchmark) / r.benchmark) * 1000) / 10 : 0;
+      return {
+        ...r,
+        x: xWithinCategoryBand(r.cat, r.dwt),
+        over: r.tpd > r.benchmark,
+        deltaPct,
+      };
     });
 
     return { vessels, skipped: missing, ref };
@@ -247,13 +265,14 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
 
           <ResponsiveContainer width="100%" height={360}>
             <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }}>
-<CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />              <XAxis
+              <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
+              <XAxis
                 type="number" dataKey="x"
-                domain={[0.5, CAT_ORDER.length + 0.5]}
-                ticks={CAT_ORDER.map((_, i) => i + 1)}
-                tickFormatter={(x) => CAT_ORDER[x - 1] || ""}
+                domain={[0, CAT_ORDER.length]}
+                ticks={CAT_ORDER.map((_, i) => i + 0.5)}
+                tickFormatter={(x) => CAT_ORDER[Math.floor(x)] || ""}
                 tick={{ fontSize: 11, fill: C.textSecondary }}
-                label={{ value: "DWT Category", position: "insideBottom", offset: -10, fontSize: 12, fill: C.textMuted }}
+                label={{ value: "DWT Category Bands", position: "insideBottom", offset: -10, fontSize: 12, fill: C.textMuted }}
               />
               <YAxis
                 type="number" domain={[0, yMax]}
@@ -266,16 +285,7 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
                 <Line
                   data={BENCH_STEPS} dataKey="benchmark" stroke={C.accent}
                   strokeWidth={2} strokeDasharray="6 4"
-                  dot={(props) => {
-                    const { cx, cy, payload } = props;
-                    // Only show dots at actual category points (B1, B2, B3, B4, B5)
-                    if (!BENCH.some(b => b.x === payload.x && b.benchmark === payload.benchmark)) {
-                      return null;
-                    }
-                    return (
-                      <circle cx={cx} cy={cy} r={5} fill={C.accent} stroke={C.cardSolid} strokeWidth={2} />
-                    );
-                  }}
+                  dot={false}
                   isAnimationActive={false} name="benchmark"
                 />
               )}
