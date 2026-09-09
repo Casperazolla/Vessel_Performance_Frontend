@@ -247,6 +247,7 @@ function CustomTooltip({ active, payload }) {
 function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const [showBench, setShowBench] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [hover, setHover] = useState(null); // { point, cx, cy }
   const lastPointClickAtRef = useRef(0);
 
   const { vessels, skipped } = useMemo(() => {
@@ -289,6 +290,31 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
     if (!p) return;
     lastPointClickAtRef.current = Date.now();
     setSelectedPoint(p);
+  };
+
+  const VesselDot = (props) => {
+    const { cx, cy, payload, color } = props;
+    if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+    const active = hover?.point?.imo === payload?.imo;
+    return (
+      <g>
+        {/* transparent, slightly larger hit area for easier hovering */}
+        <circle
+          cx={cx} cy={cy} r={11}
+          fill="transparent"
+          style={{ cursor: "pointer" }}
+          onMouseEnter={() => setHover({ point: payload, cx, cy })}
+          onMouseLeave={() => setHover(null)}
+          onClick={() => handleVesselPointClick(payload)}
+        />
+        <circle
+          cx={cx} cy={cy} r={active ? 6.5 : 5}
+          fill={color}
+          stroke="#fff" strokeWidth={1.5}
+          pointerEvents="none"
+        />
+      </g>
+    );
   };
 
   const handleChartClick = (state) => {
@@ -363,59 +389,64 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
             </div>
           )}
 
-          <ResponsiveContainer width="100%" height={360}>
-            <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }} onClick={handleChartClick}>
-              <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
-              <XAxis
-                type="number" dataKey="x"
-                domain={[0, CAT_ORDER.length]}
-                ticks={CAT_ORDER.map((_, i) => i + 0.5)}
-                tickFormatter={(x) => CAT_ORDER[Math.floor(x)] || ""}
-                tick={{ fontSize: 11, fill: C.textSecondary }}
-                label={{ value: "DWT Category Bands", position: "insideBottom", offset: -10, fontSize: 12, fill: C.textMuted }}
-              />
-              <YAxis
-                type="number" domain={[0, yMax]}
-                tick={{ fontSize: 10, fill: C.textMuted }} width={52}
-                label={{ value: "Consumption (tpd)", angle: -90, position: "insideLeft", fontSize: 12, fill: C.textMuted, offset: 8 }}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                shared={false}
-                cursor={{ stroke: "rgba(15, 23, 42, 0.15)", strokeWidth: 2 }}
-                wrapperStyle={{ outline: "none" }}
-                contentStyle={{ outline: "none", padding: 0 }}
-              />
-
-              {showBench && (
-                <Line
-                  data={BENCH_STEPS} dataKey="benchmark" stroke={C.accent}
-                  strokeWidth={2} strokeDasharray="6 4"
-                  dot={false}
-                  isAnimationActive={false} name="benchmark"
+          <div style={{ position: "relative", width: "100%" }}>
+            <ResponsiveContainer width="100%" height={360}>
+              <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }} onClick={handleChartClick}>
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
+                <XAxis
+                  type="number" dataKey="x"
+                  domain={[0, CAT_ORDER.length]}
+                  ticks={CAT_ORDER.map((_, i) => i + 0.5)}
+                  tickFormatter={(x) => CAT_ORDER[Math.floor(x)] || ""}
+                  tick={{ fontSize: 11, fill: C.textSecondary }}
+                  label={{ value: "DWT Category Bands", position: "insideBottom", offset: -10, fontSize: 12, fill: C.textMuted }}
                 />
-              )}
-
-              <Scatter 
-                data={under} 
-                dataKey="tpd" 
-                fill={C.success} 
-                onClick={handleVesselPointClick}
-                name="Vessels"
-                isAnimationActive={false}
-                shape={{ r: 5 }}
-              />
-              <Scatter 
-                data={over} 
-                dataKey="tpd" 
-                fill={C.critical} 
-                onClick={handleVesselPointClick}
-                name="Vessels"
-                isAnimationActive={false}
-                shape={{ r: 5 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+                <YAxis
+                  type="number" domain={[0, yMax]}
+                  tick={{ fontSize: 10, fill: C.textMuted }} width={52}
+                  label={{ value: "Consumption (tpd)", angle: -90, position: "insideLeft", fontSize: 12, fill: C.textMuted, offset: 8 }}
+                />
+          
+                {/* recharts <Tooltip> removed on purpose — hover is driven by VesselDot */}
+          
+                {showBench && (
+                  <Line
+                    data={BENCH_STEPS} dataKey="benchmark" stroke={C.accent}
+                    strokeWidth={2} strokeDasharray="6 4"
+                    dot={false} isAnimationActive={false} name="benchmark"
+                  />
+                )}
+          
+                <Scatter
+                  data={under} dataKey="tpd"
+                  shape={<VesselDot color={C.success} />}
+                  isAnimationActive={false} name="Vessels"
+                />
+                <Scatter
+                  data={over} dataKey="tpd"
+                  shape={<VesselDot color={C.critical} />}
+                  isAnimationActive={false} name="Vessels"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          
+            {hover && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: hover.cx,
+                  top: hover.cy,
+                  transform: hover.cy < 130
+                    ? "translate(-50%, 14px)"           // flip below when near the top
+                    : "translate(-50%, calc(-100% - 12px))",
+                  pointerEvents: "none",
+                  zIndex: 20,
+                }}
+              >
+                <CustomTooltip active payload={[{ payload: hover.point }]} />
+              </div>
+            )}
+          </div>
 
           {skipped.length > 0 && (
             <div style={{ marginTop: 8, fontSize: 11, color: C.warning }}>
