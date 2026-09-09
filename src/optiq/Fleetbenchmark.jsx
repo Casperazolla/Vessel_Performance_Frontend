@@ -364,13 +364,23 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
                 <XAxis
                   type="number" dataKey="x"
                   domain={[0, CAT_ORDER.length]}
-                  ticks={CAT_ORDER.map((_, i) => i + 0.5)}
+                  ticks={[
+                    0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5
+                  ]}
                   tickFormatter={(x) => {
-                    const catIndex = Math.floor(x);
-                    const cat = CAT_ORDER[catIndex];
-                    if (!cat) return "";
-                    const band = CATEGORY_BANDS.find(b => b.cat === cat);
-                    return `${cat}\n${band?.maxDwt.toLocaleString() || ""}`;
+                    // Show category names at centers (0.5, 1.5, 2.5, 3.5, 4.5)
+                    if (x % 1 === 0.5) {
+                      const catIndex = Math.floor(x);
+                      return CAT_ORDER[catIndex] || "";
+                    }
+                    
+                    // Show maxDwt at boundaries (1, 2, 3, 4, 5)
+                    if (Number.isInteger(x) && x > 0 && x < CAT_ORDER.length) {
+                      const band = CATEGORY_BANDS[x - 1];
+                      return band ? band.maxDwt.toLocaleString() : "";
+                    }
+                    
+                    return "";
                   }}
                   tick={{ fontSize: 10, fill: C.textSecondary }}
                   label={{ value: "DWT Category Bands", position: "insideBottom", offset: -10, fontSize: 12, fill: C.textMuted }}

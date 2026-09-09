@@ -340,9 +340,9 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
               <select
                 value={intensity}
                 onChange={(e) => setIntensity(e.target.value)}
-                style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: C.textPrimary }}
+                style={{ padding: "10px", borderRadius: 8, background: "white", border: `1px solid ${C.border}`, color: "black" }}
               >
-                <option value="">Fouling Intensity</option>
+               
                 {foulingCfg.options.map((o) => (
                   <option key={o.label} value={o.label}>{o.label}</option>
                 ))}
@@ -357,14 +357,14 @@ function FleetDashboard({ fleet, results, onBack, onLogout }) {
             )}
             <button
               onClick={applyCustomFouling}
-              disabled={foulingLoading || !customGrade || !customIdleDays}
+              
               style={{
                 padding: "10px 12px",
                 borderRadius: 8,
                 border: `1px solid ${C.border}`,
-                background: (foulingLoading || !customGrade) ? "rgba(14,165,233,0.4)" : C.accent,
+                background: (foulingLoading || !customGrade) ? C.accent : C.accent,
                 color: "#fff",
-                cursor: (foulingLoading || !customGrade) ? "not-allowed" : "pointer",
+                cursor: (foulingLoading || !customGrade) ? "pointer" : "pointer",
                 fontSize: 12,
                 fontWeight: 700,
               }}
