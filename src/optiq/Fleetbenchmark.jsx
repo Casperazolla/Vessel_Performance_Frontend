@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -106,6 +106,35 @@ function xWithinCategoryBand(cat, dwt) {
   return i + ratio;
 }
 
+function spreadOverlappingPoints(points) {
+  const byKey = {};
+  points.forEach((p) => {
+    const key = `${p.cat}|${Number(p.x).toFixed(4)}|${Number(p.tpd).toFixed(3)}`;
+    (byKey[key] ||= []).push(p);
+  });
+
+  const out = [];
+  Object.values(byKey).forEach((group) => {
+    if (group.length === 1) {
+      out.push(group[0]);
+      return;
+    }
+
+    const sorted = [...group].sort((a, b) => String(a.imo).localeCompare(String(b.imo)));
+    const step = 0.02;
+
+    sorted.forEach((p, i) => {
+      const bandStart = CAT_INDEX[p.cat];
+      const bandEnd = bandStart + 1;
+      const offset = (i - (sorted.length - 1) / 2) * step;
+      const x = Math.max(bandStart + 0.01, Math.min(bandEnd - 0.01, p.x + offset));
+      out.push({ ...p, x });
+    });
+  });
+
+  return out;
+}
+
 // Resolve design operating point per vessel.
 function vesselRef(vessel) {
   const fr = vessel?.fleet_reference || {};
@@ -159,34 +188,54 @@ function tpdAtDesign(fuelData, ref) {
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
+  
+  // Get the first payload entry
+  let p = null;
+  
+  // Try to find vessel IMO entry
   const vesselEntry = payload.find((entry) => entry?.payload?.imo);
-  const fallbackEntry = payload.find((entry) => entry?.payload?.cat);
-  const p = (vesselEntry || fallbackEntry)?.payload;
-  if (!p) return null;
+  if (vesselEntry) {
+    p = vesselEntry.payload;
+  }
+  
+  // If no vessel entry found, return null (don't show tooltip for benchmark or empty)
+  if (!p || !p.imo) return null;
+  
   const box = {
-    background: "white", border: `1px solid ${C.border}`,
-    borderRadius: 8, padding: "10px 12px", fontSize: 11, color: "#0f172a",
-    boxShadow: "0 8px 20px rgba(15, 23, 42, 0.12)",
-    transition: "opacity 160ms ease, transform 160ms ease",
+    background: "white",
+    border: `1px solid #e5e7eb`,
+    borderRadius: 8,
+    padding: "12px 14px",
+    fontSize: 11,
+    color: "#1f2937",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   };
 
-  if (p.imo) {
-    return (
-      <div style={box}>
-        <div style={{ color: "#0f172a", fontWeight: 700, marginBottom: 4 }}>IMO {p.imo}</div>
-        <div>Category: <span style={{ color: C.accent }}>{p.cat}</span>{p.dwt ? ` · ${Math.round(p.dwt).toLocaleString()} DWT` : ""}</div>
-        <div>Consumption: <span style={{ color: "#0f172a", fontWeight: 600 }}>{p.tpd.toFixed(2)} tpd</span></div>
-        <div>Benchmark: <span style={{ color: "#0f172a", fontWeight: 600 }}>{p.benchmark.toFixed(2)} tpd</span></div>
-        <div style={{ marginTop: 4, color: p.over ? C.critical : C.success, fontWeight: 700 }}>
-          {p.over ? "+" : ""}{p.deltaPct}% vs benchmark
-        </div>
-      </div>
-    );
-  }
   return (
     <div style={box}>
-      <div style={{ color: C.accent, fontWeight: 700, marginBottom: 4 }}>Category {p.cat}</div>
-      <div>Benchmark: <span style={{ color: "#0f172a", fontWeight: 600 }}>{p.benchmark.toFixed(2)} tpd</span></div>
+      <div style={{ color: "#1f2937", fontWeight: 700, marginBottom: 6 }}>
+        IMO {p.imo}
+      </div>
+      <div style={{ marginBottom: 4 }}>
+        <span style={{ color: "#6b7280" }}>Category: </span>
+        <span style={{ color: "#3b82f6", fontWeight: 600 }}>{p.cat}</span>
+        {p.dwt ? ` · ${Math.round(p.dwt).toLocaleString()} DWT` : ""}
+      </div>
+      <div style={{ marginBottom: 4 }}>
+        <span style={{ color: "#6b7280" }}>Consumption: </span>
+        <span style={{ fontWeight: 600 }}>{p.tpd?.toFixed(2) || "N/A"} tpd</span>
+      </div>
+      <div style={{ marginBottom: 6 }}>
+        <span style={{ color: "#6b7280" }}>Benchmark: </span>
+        <span style={{ fontWeight: 600 }}>{p.benchmark?.toFixed(2) || "N/A"} tpd</span>
+      </div>
+      <div style={{
+        color: p.over ? "#dc2626" : "#059669",
+        fontWeight: 700,
+        fontSize: 10,
+      }}>
+        {p.over ? "+" : ""}{p.deltaPct || 0}% vs benchmark
+      </div>
     </div>
   );
 }
@@ -198,6 +247,7 @@ function CustomTooltip({ active, payload }) {
 function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const [showBench, setShowBench] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const lastPointClickAtRef = useRef(0);
 
   const { vessels, skipped } = useMemo(() => {
     const resolved = [];
@@ -216,7 +266,7 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
       resolved.push({ imo: v.imo, dwt, cat, tpd, benchmark });
     });
 
-    const vessels = resolved.map((r) => {
+    const baseVessels = resolved.map((r) => {
       const deltaPct = r.benchmark > 0 ? Math.round(((r.tpd - r.benchmark) / r.benchmark) * 1000) / 10 : 0;
       return {
         ...r,
@@ -225,6 +275,8 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
         deltaPct,
       };
     });
+
+    const vessels = spreadOverlappingPoints(baseVessels);
 
     return { vessels, skipped: missing };
   }, [ok, fuelByImo]);
@@ -235,10 +287,13 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const handleVesselPointClick = (point) => {
     const p = point?.payload?.imo ? point.payload : point?.imo ? point : null;
     if (!p) return;
+    lastPointClickAtRef.current = Date.now();
     setSelectedPoint(p);
   };
 
   const handleChartClick = (state) => {
+    if (Date.now() - lastPointClickAtRef.current < 180) return;
+
     const clicked = (state?.activePayload || [])
       .map((entry) => entry?.payload)
       .find((p) => p?.imo);
@@ -299,7 +354,7 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
           </div>
 
           <div style={{ marginBottom: 8, fontSize: 11, color: C.textMuted }}>
-            Hover or click a vessel point to view details. Click empty chart space to clear selection.
+            Click a red or green vessel dot to pin its tooltip. Hover still works for quick view.
           </div>
 
           {selectedPoint && (
@@ -327,7 +382,9 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
               <Tooltip
                 content={<CustomTooltip />}
                 shared={false}
-                cursor={{ stroke: "rgba(15, 23, 42, 0.2)", strokeWidth: 1 }}
+                cursor={{ stroke: "rgba(15, 23, 42, 0.15)", strokeWidth: 2 }}
+                wrapperStyle={{ outline: "none" }}
+                contentStyle={{ outline: "none", padding: 0 }}
               />
 
               {showBench && (
@@ -339,8 +396,24 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
                 />
               )}
 
-              <Scatter data={under} dataKey="tpd" fill={C.success} onClick={handleVesselPointClick} />
-              <Scatter data={over} dataKey="tpd" fill={C.critical} onClick={handleVesselPointClick} />
+              <Scatter 
+                data={under} 
+                dataKey="tpd" 
+                fill={C.success} 
+                onClick={handleVesselPointClick}
+                name="Vessels"
+                isAnimationActive={false}
+                shape={{ r: 5 }}
+              />
+              <Scatter 
+                data={over} 
+                dataKey="tpd" 
+                fill={C.critical} 
+                onClick={handleVesselPointClick}
+                name="Vessels"
+                isAnimationActive={false}
+                shape={{ r: 5 }}
+              />
             </ComposedChart>
           </ResponsiveContainer>
 
