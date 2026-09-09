@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ReferenceLine, ResponsiveContainer, Area, AreaChart, ComposedChart,
@@ -37,6 +37,19 @@ function getFoulingConfig(idleDaysRaw) {
     return { valid: true, needsIntensity: false, options: [], grade: 5, note: "Fouling grade auto-assigned: 5" };
 
   return { valid: true, needsIntensity: false, options: [], grade: 6, note: "Fouling grade auto-assigned: 6" };
+}
+
+function nearestIndex(arr, target) {
+  let best = 0;
+  let bestD = Infinity;
+  arr.forEach((v, i) => {
+    const d = Math.abs(Number(v) - Number(target));
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
+  });
+  return best;
 }
 
 function Dashboard({ imo, onBack, shipData, onLogout }) {
@@ -767,21 +780,105 @@ curvesPayload[key] = {
   // };
 
   const priceNum = parseFloat(bunkerPrice) || 0;
-  const fmtCell = (tpd) =>
-    fuelUnit === "usd" ? Math.round(tpd * priceNum).toLocaleString() : tpd.toFixed(1);
+  const fmtCell = (tpd, precision = 1) =>
+    fuelUnit === "usd"
+      ? `$${Math.round(tpd * priceNum).toLocaleString()}`
+      : Number(tpd).toFixed(precision);
+
+  const hoverSpeedValue = hoverRight ?? hoverLow;
+
+  const liveKpis = useMemo(() => {
+    const curve = curves[rightKey];
+    const data = buildChartData(rightKey);
+
+    if (!curve || !data.length) {
+      return {
+        speed: "-",
+        speedNote: "No chart point selected",
+        finalPower: "-",
+        finalPowerNote: "Clean: -",
+        fuelValue: "-",
+        fuelUnitLabel: fuelUnit === "usd" ? "$/day" : "t/day",
+        fuelNote: fuelUnit === "usd" ? `Bunker: $${Math.round(priceNum)}/t` : "From fuel curve",
+        addedPower: "-",
+        addedPowerNote: "Weather + Fouling",
+      };
+    }
+
+    let rowIndex = data.length - 1;
+    if (hoverSpeedValue != null) {
+      rowIndex = nearestIndex(
+        data.map((r) => Number(r.speed)),
+        Number(hoverSpeedValue)
+      );
+    }
+
+    const row = data[rowIndex] || {};
+    const speed = Number(row.speed);
+    const cleanPower = Number(row.brake_power) || 0;
+    const finalPower = Number(row.weather_power ?? row.fouled_power ?? row.brake_power) || 0;
+    const addedKw = Math.max(0, Math.round(finalPower - cleanPower));
+    const addedPct = cleanPower > 0 ? ((finalPower - cleanPower) / cleanPower) * 100 : 0;
+
+    // Resolve matching fuel row and nearest speed for fuel value.
+    let fuelRow = fuelConsumptionData?.[rightKey] || null;
+    if (!fuelRow && fuelConsumptionData && curve?.draught != null) {
+      const rows = Object.values(fuelConsumptionData);
+      fuelRow = rows.length
+        ? rows.reduce((a, b) =>
+          Math.abs(Number(b?.draught) - Number(curve.draught)) < Math.abs(Number(a?.draught) - Number(curve.draught)) ? b : a
+        )
+        : null;
+    }
+
+    let fuelTpd = null;
+    if (fuelRow?.speed?.length && fuelRow?.fuel_t_per_day?.length) {
+      const i = nearestIndex(fuelRow.speed, speed);
+      const v = Number(fuelRow.fuel_t_per_day[i]);
+      fuelTpd = Number.isFinite(v) ? v : null;
+    }
+
+    const fuelValue = fuelTpd == null
+      ? "-"
+      : (fuelUnit === "usd" ? `$${Math.round(fuelTpd * priceNum).toLocaleString()}` : fuelTpd.toFixed(2));
+
+    return {
+      speed: Number.isFinite(speed) ? speed.toFixed(1) : "-",
+      speedNote: hoverSpeedValue != null ? "Hovered point" : "Latest speed point",
+      finalPower: finalPower.toLocaleString(),
+      finalPowerNote: `Clean: ${cleanPower.toLocaleString()} kW`,
+      fuelValue,
+      fuelUnitLabel: fuelUnit === "usd" ? "$/day" : "t/day",
+      fuelNote: fuelUnit === "usd" ? `Bunker: $${Math.round(priceNum)}/t` : "From fuel curve",
+      addedPower: `+${addedPct.toFixed(1)}%`,
+      addedPowerNote: `${addedKw.toLocaleString()} kW over clean`,
+    };
+  }, [
+    curves,
+    rightKey,
+    fuelConsumptionData,
+    fuelUnit,
+    priceNum,
+    hoverSpeedValue,
+    weatherApplied,
+    addedResistanceData,
+    fouledCurves,
+    customFouledCurves,
+    foulingMode,
+  ]);
 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       
       {/* KPI Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 12 }}>
         <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px" }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#0891b2", textTransform: "uppercase", marginBottom: 6 }}>Speed</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>21.3 <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>kn</span></div>
-              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>+0.8 kn vs baseline</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>{liveKpis.speed} <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>kn</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>{liveKpis.speedNote}</div>
             </div>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
           </div>
@@ -791,8 +888,8 @@ curvesPayload[key] = {
           <div style={{ fontSize: 11, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", marginBottom: 6 }}>Final Power</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>25,918 <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>kW</span></div>
-              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>+4,581 kW (+21.5%)</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>{liveKpis.finalPower} <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>kW</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>{liveKpis.finalPowerNote}</div>
             </div>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           </div>
@@ -802,8 +899,8 @@ curvesPayload[key] = {
           <div style={{ fontSize: 11, fontWeight: 800, color: "#2563eb", textTransform: "uppercase", marginBottom: 6 }}>Fuel Consumption</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>78.4 <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>t/day</span></div>
-              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>+12.4% vs baseline</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>{liveKpis.fuelValue} <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>{liveKpis.fuelUnitLabel}</span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>{liveKpis.fuelNote}</div>
             </div>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M12 2v20M17 5H9a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-6a4 4 0 0 0-4-4Z" /></svg>
           </div>
@@ -813,8 +910,8 @@ curvesPayload[key] = {
           <div style={{ fontSize: 11, fontWeight: 800, color: "#ea580c", textTransform: "uppercase", marginBottom: 6 }}>Added Power</div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>+21.5<span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>%</span></div>
-              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>Weather + Fouling</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#1f2937" }}>{liveKpis.addedPower}<span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}></span></div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontWeight: 500 }}>{liveKpis.addedPowerNote}</div>
             </div>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="1.5"><path d="M12 2v20M5 10h14M5 14h14" /></svg>
           </div>
@@ -1300,7 +1397,14 @@ curvesPayload[key] = {
               }
               return (
                 <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
-                  <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                  <ComposedChart
+                    data={data}
+                    margin={{ top: 10, right: 10, bottom: 20, left: 0 }}
+                    onMouseMove={(st) => {
+                      if (st && st.activeLabel != null) setHoverRight(Number(st.activeLabel));
+                    }}
+                    onMouseLeave={() => setHoverRight(null)}
+                  >
                     <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
                     <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
                     <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
@@ -1332,7 +1436,14 @@ curvesPayload[key] = {
               }
               return (
                 <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
-                  <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                  <ComposedChart
+                    data={data}
+                    margin={{ top: 10, right: 10, bottom: 20, left: 0 }}
+                    onMouseMove={(st) => {
+                      if (st && st.activeLabel != null) setHoverRight(Number(st.activeLabel));
+                    }}
+                    onMouseLeave={() => setHoverRight(null)}
+                  >
                     <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
                     <XAxis dataKey="speed" tick={{ fontSize: 9, fill: "#6b7280" }} label={{ value: "Speed (kn)", position: "insideBottom", offset: -8, fontSize: 10, fill: "#6b7280" }} />
                     <YAxis tick={{ fontSize: 9, fill: "#6b7280" }} width={50} label={{ value: "Power (kW)", angle: -90, position: "insideLeft", fontSize: 10, fill: "#6b7280", offset: 10 }} />
@@ -1532,7 +1643,7 @@ linear-gradient(
               background: bgColor,
             }}
           >
-            {fuel.toFixed(3)}
+            {fmtCell(fuel, 3)}
           </td>
         );
       })}
