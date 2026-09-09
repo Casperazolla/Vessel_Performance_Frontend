@@ -246,10 +246,7 @@ function CustomTooltip({ active, payload }) {
 
 function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const [showBench, setShowBench] = useState(true);
-  const [selectedPoint, setSelectedPoint] = useState(null);
   const [hover, setHover] = useState(null); // { point, cx, cy }
-  const lastPointClickAtRef = useRef(0);
-
   const { vessels, skipped } = useMemo(() => {
     const resolved = [];
     const missing = [];
@@ -285,13 +282,6 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
   const over = vessels.filter((v) => v.over);
   const under = vessels.filter((v) => !v.over);
 
-  const handleVesselPointClick = (point) => {
-    const p = point?.payload?.imo ? point.payload : point?.imo ? point : null;
-    if (!p) return;
-    lastPointClickAtRef.current = Date.now();
-    setSelectedPoint(p);
-  };
-
   const VesselDot = (props) => {
     const { cx, cy, payload, color } = props;
     if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
@@ -305,7 +295,6 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
           style={{ cursor: "pointer" }}
           onMouseEnter={() => setHover({ point: payload, cx, cy })}
           onMouseLeave={() => setHover(null)}
-          onClick={() => handleVesselPointClick(payload)}
         />
         <circle
           cx={cx} cy={cy} r={active ? 6.5 : 5}
@@ -315,21 +304,6 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
         />
       </g>
     );
-  };
-
-  const handleChartClick = (state) => {
-    if (Date.now() - lastPointClickAtRef.current < 180) return;
-
-    const clicked = (state?.activePayload || [])
-      .map((entry) => entry?.payload)
-      .find((p) => p?.imo);
-    if (clicked) {
-      setSelectedPoint(clicked);
-      return;
-    }
-    if (!state?.activePayload?.length) {
-      setSelectedPoint(null);
-    }
   };
 
   const maxY = Math.max(0, ...BENCH.map((b) => b.benchmark), ...vessels.map((v) => v.tpd));
@@ -380,25 +354,25 @@ function FleetBenchmark({ ok = [], fuelByImo = {} }) {
           </div>
 
           <div style={{ marginBottom: 8, fontSize: 11, color: C.textMuted }}>
-            Click a red or green vessel dot to pin its tooltip. Hover still works for quick view.
+            Hover over a red or green vessel dot to view details.
           </div>
-
-          {selectedPoint && (
-            <div style={{ marginBottom: 10, display: "inline-block" }}>
-              <CustomTooltip active payload={[{ payload: selectedPoint }]} />
-            </div>
-          )}
 
           <div style={{ position: "relative", width: "100%" }}>
             <ResponsiveContainer width="100%" height={360}>
-              <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }} onClick={handleChartClick}>
+              <ComposedChart margin={{ top: 10, right: 20, bottom: 24, left: 6 }}>
                 <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 3" vertical={false} />
                 <XAxis
                   type="number" dataKey="x"
                   domain={[0, CAT_ORDER.length]}
                   ticks={CAT_ORDER.map((_, i) => i + 0.5)}
-                  tickFormatter={(x) => CAT_ORDER[Math.floor(x)] || ""}
-                  tick={{ fontSize: 11, fill: C.textSecondary }}
+                  tickFormatter={(x) => {
+                    const catIndex = Math.floor(x);
+                    const cat = CAT_ORDER[catIndex];
+                    if (!cat) return "";
+                    const band = CATEGORY_BANDS.find(b => b.cat === cat);
+                    return `${cat}\n${band?.maxDwt.toLocaleString() || ""}`;
+                  }}
+                  tick={{ fontSize: 10, fill: C.textSecondary }}
                   label={{ value: "DWT Category Bands", position: "insideBottom", offset: -10, fontSize: 12, fill: C.textMuted }}
                 />
                 <YAxis

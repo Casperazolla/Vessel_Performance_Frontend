@@ -864,7 +864,7 @@ curvesPayload[key] = {
             background: "white", border: `1px solid ${C.borderCard}`, borderRadius: 12,
           }}
         >
-          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: "#0a8f7a", fontWeight: 700 }}>
+          <label style={{ display: "block", marginBottom: 8, fontSize: 11, color: C.accent, fontWeight: 700 }}>
             FOULING CURVE
           </label>
 
@@ -940,8 +940,8 @@ curvesPayload[key] = {
           }}
         >
 
-          <label style={{ display: "block", marginBottom: 12, fontSize: 11, color: C.accent }}>
-            Added Power
+          <label style={{ display: "block", marginBottom: 12, fontSize: 11, color: C.accent , fontWeight: 700 }}>
+           ADDED POWER
           </label>
 
           <div style={{ marginBottom: 16 }}>
@@ -980,6 +980,7 @@ curvesPayload[key] = {
                     marginBottom: 6,
                     fontSize: 11,
                     color: C.accent,
+                    fontWeight: 600,
                   }}
                 >
                   Transverse area A_T (m^2)
