@@ -768,6 +768,15 @@ curvesPayload[key] = {
     : [];
   const fuelMin = fuelValues.length ? Math.min(...fuelValues) : 0;
   const fuelMax = fuelValues.length ? Math.max(...fuelValues) : 1;
+  const visibleSpeedIndexes = useMemo(() => {
+    if (!fuelConsumptionData || Object.keys(fuelConsumptionData).length === 0) return [];
+    const firstKey = Object.keys(fuelConsumptionData)[0];
+    const speeds = fuelConsumptionData[firstKey]?.speed || [];
+
+    return speeds
+      .map((speed, index) => ({ speed, index }))
+      .filter(({ speed }) => Number(speed) >= 10);
+  }, [fuelConsumptionData]);
 
   // const fuelCellStyle = (tpd) => {
   //   const frac = fuelMax > fuelMin ? (tpd - fuelMin) / (fuelMax - fuelMin) : 0;
@@ -1598,9 +1607,9 @@ linear-gradient(
                         Draught
                       </span>
                     </th>
-                    {fuelConsumptionData[Object.keys(fuelConsumptionData)[0]].speed.map((speed) => (
-                      <th key={speed} style={{ padding: "10px 12px", background: "#dbeafe", textAlign: "center", color: "#1f2937", fontWeight: 600, border: "1px solid #bfdbfe" }}>
-                        {speed.toFixed(1)}
+                    {visibleSpeedIndexes.map(({ speed, index }) => (
+                      <th key={`${speed}-${index}`} style={{ padding: "10px 12px", background: "#dbeafe", textAlign: "center", color: "#1f2937", fontWeight: 600, border: "1px solid #bfdbfe" }}>
+                        {Number(speed).toFixed(1)}
                       </th>
                     ))}
                   </tr>
@@ -1626,15 +1635,18 @@ linear-gradient(
         {draughtData.draught.toFixed(2)}
       </td>
 
-      {draughtData.fuel_t_per_day.map((fuel, index) => {
+      {visibleSpeedIndexes.map(({ index: speedIndex }, visibleIndex) => {
+        const fuel = draughtData.fuel_t_per_day[speedIndex];
+        if (fuel === undefined || fuel === null) return null;
+
         // Light blue gradient on right cells
-        const totalCells = draughtData.fuel_t_per_day.length;
-        const isBlueCells = index >= totalCells - 4;
+        const totalCells = visibleSpeedIndexes.length;
+        const isBlueCells = visibleIndex >= totalCells - 4;
         const bgColor = isBlueCells ? "#dbeafe" : "#ffffff";
         
         return (
           <td
-            key={index}
+            key={`${key}-${speedIndex}`}
             style={{
               padding: "10px",
               textAlign: "center",
