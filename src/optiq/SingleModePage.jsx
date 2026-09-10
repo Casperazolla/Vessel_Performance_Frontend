@@ -785,6 +785,7 @@ curvesPayload[key] = {
       ? `$${Math.round(tpd * priceNum).toLocaleString()}`
       : Number(tpd).toFixed(precision);
 
+  const DEFAULT_KPI_SPEED = 16.5;
   const hoverSpeedValue = hoverRight ?? hoverLow;
 
   const liveKpis = useMemo(() => {
@@ -805,13 +806,11 @@ curvesPayload[key] = {
       };
     }
 
-    let rowIndex = data.length - 1;
-    if (hoverSpeedValue != null) {
-      rowIndex = nearestIndex(
-        data.map((r) => Number(r.speed)),
-        Number(hoverSpeedValue)
-      );
-    }
+    const targetSpeed = hoverSpeedValue != null ? Number(hoverSpeedValue) : DEFAULT_KPI_SPEED;
+    const rowIndex = nearestIndex(
+      data.map((r) => Number(r.speed)),
+      targetSpeed
+    );
 
     const row = data[rowIndex] || {};
     const speed = Number(row.speed);
@@ -844,7 +843,7 @@ curvesPayload[key] = {
 
     return {
       speed: Number.isFinite(speed) ? speed.toFixed(1) : "-",
-      speedNote: hoverSpeedValue != null ? "Hovered point" : "Latest speed point",
+      speedNote: hoverSpeedValue != null ? "Hovered point" : `Default point (${DEFAULT_KPI_SPEED} kn)`,
       finalPower: finalPower.toLocaleString(),
       finalPowerNote: `Clean: ${cleanPower.toLocaleString()} kW`,
       fuelValue,
@@ -859,6 +858,7 @@ curvesPayload[key] = {
     fuelConsumptionData,
     fuelUnit,
     priceNum,
+    DEFAULT_KPI_SPEED,
     hoverSpeedValue,
     weatherApplied,
     addedResistanceData,
